@@ -1,0 +1,69 @@
+% =====================================================================
+%  Apêndice A — Mapa de barramento (instrumento da Aula 06)
+% =====================================================================
+\chapter{Mapa de barramento}
+\label{ap:barramento}
+
+O mapa mostra os dispositivos que estão no protótipo da AP2, conforme
+\caminho{firmware/src/main.cpp}. Em relação à AP1, saíram o módulo
+fotorresistor (GPIO19) e os três LEDs (GPIO21, 22 e 23), e entrou o
+BH1750 no I\textsuperscript{2}C.
+
+\begin{table}[H]
+\centering
+\caption{Mapa de barramento do protótipo}
+\label{tab:barramento}
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}L{2.3cm}L{2.6cm}L{1.9cm}L{2.6cm}L{2.3cm}C{0.9cm}C{1.7cm}@{}}
+\toprule
+\textbf{Dispositivo} & \textbf{O que mede ou faz} & \textbf{Barra\-mento}
+& \textbf{Como é selecionado} & \textbf{Pinos na DevKit V1} & \textbf{Ten\-são}
+& \textbf{Leituras por segundo} \\
+\midrule
+Módulo DHT11 & temperatura e UR do ar & serial de um fio, próprio do DHT (não é o 1-Wire da Dallas)
+  & ponto a ponto: o pino é a seleção & D18 (GPIO18), DATA bidirecional & \SI{3.3}{\volt}
+  & 1/300 (até 4 a mais por ciclo, nas tentativas) \\
+BH1750 (GY-302) & luz, em lux & I\textsuperscript{2}C, \SI{100}{\kilo\hertz}
+  & endereço \texttt{0x23} (ADDR solto) & SDA/SCL (21/22) & \SI{3.3}{\volt} & 1/300 \\
+Rádio BLE (interno) & enlace com o central & interno ao ESP32
+  & --- & antena da placa & --- & 1 notificação a cada \SI{300}{\second} \\
+Monitor serial & linha CSV de depuração & UART0, \SI{115200}{\baud} 8N1
+  & ponto a ponto, pelo conversor USB-serial & TX0/RX0 (GPIO1/3) & \SI{3.3}{\volt} & 1/300 \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+\section*{Decisões de barramento}
+\phantomsection
+\addcontentsline{toc}{section}{Decisões de barramento}
+
+\begin{description}[style=unboxed, leftmargin=0pt, font=\normalfont\bfseries]
+  \item[1. Conflitos de pino encontrados, e como foram resolvidos.]\hfill\\
+    O conflito previsto na AP1, o I\textsuperscript{2}C padrão (21/22)
+    ocupado pelos LEDs vermelho e amarelo, desapareceu com a saída dos
+    LEDs (\DP{3} e \DP{5}). O barramento usa os pinos padrão com
+    \texttt{Wire.begin(21,} \texttt{22)}. Os três GPIO usados não definem o modo de
+    inicialização, não estão ligados à \emph{flash} e não são a UART0
+    \cite{espressif2023} (\CT{10}).
+  \item[2. Colisões de endereço, se há dois dispositivos I\textsuperscript{2}C iguais.]\hfill\\
+    Nenhuma: o BH1750 é o único dispositivo no barramento. Um segundo
+    BH1750 iria para \texttt{0x5C}, com o pino ADDR em nível alto; um
+    BME280, a troca prevista para o DHT11, fica em \texttt{0x76} ou \texttt{0x77}.
+    O \emph{firmware} varre os endereços de 1 a 126 ao ligar e os lista na
+    serial, o que torna uma colisão visível na primeira linha.
+  \item[3. O dispositivo mais lento do conjunto, e quanto ele custa ao laço.]\hfill\\
+    Em tempo de espera, o BH1750: cada medida espera
+    \SI{100}{\milli\second} com \texttt{delay()} pela conversão, que no
+    modo de alta resolução leva tipicamente \SI{120}{\milli\second} com
+    MTreg = 69 e cai para cerca de $120 \times 31/69 \approx
+    \SI{54}{\milli\second}$ com MTreg = 31 \cite{rohmbh1750}. Em
+    barramento, o DHT11: cerca de \SI{25}{\milli\second} por leitura, dos
+    quais cerca de \SI{4.1}{\milli\second} com as interrupções desligadas
+    (a conta da AP1, a partir do código da biblioteca \cite{adafruitdht}).
+    Somados, são cerca de \SI{125}{\milli\second} a cada
+    \SI{300}{\second}, ou 0,04\,\% do tempo. O laço não espera pela leitura
+    seguinte (Listagem~\ref{lst:laco}), e os \emph{callbacks} do NimBLE
+    rodam na tarefa do BLE, então nenhuma dessas esperas derruba o enlace.
+\end{description}

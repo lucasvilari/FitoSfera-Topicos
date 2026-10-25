@@ -1,0 +1,101 @@
+% =====================================================================
+%  RELATÓRIO TÉCNICO DE CICLO DE PROJETO
+%  Tópicos em Sistemas Computacionais I (IoT/AIoT) · UFPI · 2026.2
+%
+%  COMO USAR
+%  1. Abra config/dados-da-equipe.tex e preencha. É o único arquivo de
+%     configuração que vocês precisam tocar.
+%  2. Escreva nos arquivos da pasta conteudo/, na ordem em que aparecem
+%     abaixo. Cada um começa com uma caixa cinza explicando o que vai ali.
+%  3. Preencha os apêndices A e B com o mapa de barramento (Aula 06) e o
+%     orçamento de energia (Aula 08) que a equipe já entregou. Na AP2,
+%     os apêndices E e F (checklist e campanha) aparecem sozinhos.
+%  4. Antes de entregar, comente a linha \def\MOSTRARNOTAS{} em
+%     config/dados-da-equipe.tex para sumir com as caixas de instrução.
+%  5. Compile duas vezes, rode o BibTeX e compile mais duas.
+%     No Overleaf: basta apertar Recompile (ele faz isso sozinho).
+% =====================================================================
+
+\documentclass[
+  12pt,
+  oneside,
+  a4paper,
+  sumario=tradicional,
+  english,
+  brazil
+]{abntex2}
+
+\input{config/pacotes}
+\input{config/dados-da-equipe}
+\input{config/comandos}
+\input{config/estilo}
+
+% =====================================================================
+\begin{document}
+
+\selectlanguage{brazil}
+\frenchspacing
+
+% ---------- ELEMENTOS PRÉ-TEXTUAIS -----------------------------------
+\pretextual
+
+\imprimircapa
+\imprimirfolhaderosto*
+
+\input{conteudo/00-resumo}
+
+\pdfbookmark[0]{\listfigurename}{lof}
+\listoffigures*
+\cleardoublepage
+
+\pdfbookmark[0]{\listtablename}{lot}
+\listoftables*
+\cleardoublepage
+
+\input{conteudo/00-siglas}
+
+\pdfbookmark[0]{\contentsname}{toc}
+\tableofcontents*
+\cleardoublepage
+
+% ---------- ELEMENTOS TEXTUAIS ---------------------------------------
+\textual
+
+\input{conteudo/01-problema}
+\input{conteudo/02-requisitos}
+\input{conteudo/03-arquitetura}
+\input{conteudo/04-implementacao}
+
+% Capítulo que só existe a partir da AP2 (conectividade)
+\ifnum\value{ciclo}>1\relax
+  \input{conteudo/05-conectividade}
+\fi
+
+% Capítulo que só existe na AP3 (dados, modelo e inferência embarcada)
+\ifnum\value{ciclo}>2\relax
+  \input{conteudo/06-dados-e-modelo}
+\fi
+
+\input{conteudo/07-testes}
+\input{conteudo/08-resultados}
+\input{conteudo/09-conclusao}
+
+% ---------- ELEMENTOS PÓS-TEXTUAIS -----------------------------------
+\postextual
+
+\bibliography{referencias}
+
+\begin{apendicesenv}
+  \partapendices
+  \input{apendices/A-mapa-de-barramento}
+  \input{apendices/B-orcamento-de-energia}
+  \input{apendices/C-plano-de-testes}
+  \input{apendices/D-declaracao-de-ia}
+  % Apêndices que só existem a partir da AP2 (campanha de coleta)
+  \ifnum\value{ciclo}>1\relax
+    \input{apendices/E-checklist-de-prontidao}
+    \input{apendices/F-registro-da-campanha}
+  \fi
+\end{apendicesenv}
+
+\end{document}

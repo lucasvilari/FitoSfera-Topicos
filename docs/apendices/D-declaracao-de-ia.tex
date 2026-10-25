@@ -1,0 +1,51 @@
+% =====================================================================
+%  Apêndice D — Declaração de uso de IA generativa
+% =====================================================================
+\chapter{Declaração de uso de inteligência artificial generativa}
+\label{ap:ia}
+
+\begin{table}[H]
+\centering
+\caption{Uso de IA generativa neste ciclo}
+\label{tab:ia}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}L{3.2cm}L{2.6cm}L{5.4cm}L{4.0cm}@{}}
+\toprule
+\textbf{Etapa} & \textbf{Ferramenta} & \textbf{Para quê} & \textbf{O que a equipe verificou} \\
+\midrule
+\emph{Firmware} BLE (\emph{commit} \texttt{122c41e}) & Claude (Anthropic) &
+  apoio na escrita do código do \emph{firmware} & ensaios com o nRF Connect registrados no README \\
+Revisão do repositório & Claude (Anthropic), no Claude Code &
+  organizou o repositório para a AP2, movendo o projeto PlatformIO para \caminho{firmware/} &
+  o \emph{firmware} em \caminho{firmware/} foi compilado, gravado na placa e está funcionando \\
+Gravador e análise de dados & Claude (Anthropic), no Claude Code &
+  escreveu \texttt{gravador.py}, \texttt{protocolo.py}, \texttt{qualidade.py}, \texttt{limpar.py}, \texttt{grafico.py}, \texttt{ensaio.py}, \texttt{ct05.py} e os testes automáticos, a partir do contrato BLE do README; corrigiu o gravador durante a campanha (SIGINT e SIGTERM) &
+  10 testes automáticos passando; a equipe rodou o gravador com o nó (teste de fumaça, ensaios e campanha de 24/10) \\
+Ensaios e campanha & Claude (Anthropic), no Claude Code, no notebook do gravador &
+  rodou o teste de fumaça, os ensaios cronometrados (\CT{02}, \CT{13}, \CT{14}), o \CT{05} e os ensaios automáticos \CT{15} e \CT{16}; iniciou, acompanhou e encerrou o gravador; registrou o diário a partir do que a equipe contou &
+  as ações físicas foram da equipe: instalação e reposicionamento do nó, botão EN (\CT{17}), cabo USB (\CT{18}) e os eventos do quarto; os dados vêm do nó, sem edição \\
+Relatório & Claude (Anthropic), no Claude Code &
+  primeira versão do texto deste relatório, a partir do relatório da AP1, do README, do código e das instruções de entrega; depois da campanha, preencheu os números a partir das saídas do \texttt{qualidade.py} e dos arquivos de ensaio &
+  a equipe revisou cada capítulo e forneceu os dados que só ela tinha (local, papéis, eventos, objetivo da AP3) \\
+Não houve uso em & \multicolumn{3}{L{12.0cm}}{montagem do circuito e coleta dos dados pelo nó.} \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+\vspace{0.4cm}
+
+\noindent\textbf{Declaração.} A equipe declara que o conteúdo deste
+relatório e do código a ele associado foi revisado e é compreendido por
+todos os integrantes, e que todo uso de ferramentas de inteligência
+artificial generativa está registrado na tabela acima. Todos os
+integrantes leram esta declaração e confirmam a revisão do relatório.
+
+\vspace{0.4cm}
+
+\imprimirTabelaIntegrantes
+
+\vspace{0.4cm}
+
+\noindent\localEntrega, \dataEntrega.

@@ -1,0 +1,47 @@
+ts,hora_utc,evento,detalhe
+1792861661.862,2026-10-24T17:07:41.862+00:00,inicio_gravador,procurando 'FitoSfera'
+1792861662.540,2026-10-24T17:07:42.539+00:00,encontrado,8C:94:DF:8F:FA:16 rssi=-63 dBm
+1792861663.962,2026-10-24T17:07:43.961+00:00,conectado,8C:94:DF:8F:FA:16
+1792861664.145,2026-10-24T17:07:44.145+00:00,inscrito,a assinatura faz o nó medir e enviar na hora
+1792862264.825,2026-10-24T17:17:44.825+00:00,desconectado,8C:94:DF:8F:FA:16
+1792862266.832,2026-10-24T17:17:46.831+00:00,erro,"BleakBluetoothNotAvailableError: ('No powered Bluetooth adapters found. Turn on Bluetooth and try again.', <BleakBluetoothNotAvailableReason.POWERED_OFF: 3>)"
+1792862270.840,2026-10-24T17:17:50.839+00:00,erro,"BleakBluetoothNotAvailableError: ('No powered Bluetooth adapters found. Turn on Bluetooth and try again.', <BleakBluetoothNotAvailableReason.POWERED_OFF: 3>)"
+1792862278.853,2026-10-24T17:17:58.852+00:00,erro,"BleakBluetoothNotAvailableError: ('No powered Bluetooth adapters found. Turn on Bluetooth and try again.', <BleakBluetoothNotAvailableReason.POWERED_OFF: 3>)"
+1792862294.880,2026-10-24T17:18:14.879+00:00,erro,"BleakBluetoothNotAvailableError: ('No powered Bluetooth adapters found. Turn on Bluetooth and try again.', <BleakBluetoothNotAvailableReason.POWERED_OFF: 3>)"
+1792862327.087,2026-10-24T17:18:47.086+00:00,erro,"BleakBluetoothNotAvailableError: ('No powered Bluetooth adapters found. Turn on Bluetooth and try again.', <BleakBluetoothNotAvailableReason.POWERED_OFF: 3>)"
+1792862387.866,2026-10-24T17:19:47.866+00:00,encontrado,8C:94:DF:8F:FA:16 rssi=-63 dBm
+1792862388.862,2026-10-24T17:19:48.861+00:00,conectado,8C:94:DF:8F:FA:16
+1792862389.029,2026-10-24T17:19:49.028+00:00,inscrito,a assinatura faz o nó medir e enviar na hora
+1792865508.437,2026-10-24T18:11:48.436+00:00,inicio_gravador,procurando 'FitoSfera'
+1792865528.537,2026-10-24T18:12:08.536+00:00,nao_encontrado,nada em 20 s; nova busca em 2 s
+1792865550.599,2026-10-24T18:12:30.598+00:00,nao_encontrado,nada em 20 s; nova busca em 4 s
+1792865563.138,2026-10-24T18:12:43.138+00:00,encontrado,8C:94:DF:8F:FA:16 rssi=-127 dBm
+1792865564.102,2026-10-24T18:12:44.102+00:00,conectado,8C:94:DF:8F:FA:16
+1792865564.287,2026-10-24T18:12:44.287+00:00,inscrito,a assinatura faz o nó medir e enviar na hora
+1792865914.698,2026-10-24T18:18:34.697+00:00,desconectado,8C:94:DF:8F:FA:16
+1792865936.878,2026-10-24T18:18:56.878+00:00,nao_encontrado,nada em 20 s; nova busca em 4 s
+1792865941.508,2026-10-24T18:19:01.508+00:00,encontrado,8C:94:DF:8F:FA:16 rssi=-70 dBm
+1792865942.803,2026-10-24T18:19:02.802+00:00,conectado,8C:94:DF:8F:FA:16
+1792865943.230,2026-10-24T18:19:03.230+00:00,inscrito,a assinatura faz o nó medir e enviar na hora
+1792866028.517,2026-10-24T18:20:28.516+00:00,desconectado,8C:94:DF:8F:FA:16
+1792866043.698,2026-10-24T18:20:43.697+00:00,encontrado,8C:94:DF:8F:FA:16 rssi=-66 dBm
+1792866044.642,2026-10-24T18:20:44.641+00:00,conectado,8C:94:DF:8F:FA:16
+1792866044.827,2026-10-24T18:20:44.826+00:00,inscrito,a assinatura faz o nó medir e enviar na hora
+1792866140.118,2026-10-24T18:22:20.118+00:00,desconectado,8C:94:DF:8F:FA:16
+1792866157.294,2026-10-24T18:22:37.294+00:00,encontrado,8C:94:DF:8F:FA:16 rssi=-68 dBm
+1792866158.232,2026-10-24T18:22:38.232+00:00,conectado,8C:94:DF:8F:FA:16
+1792866158.417,2026-10-24T18:22:38.417+00:00,inscrito,a assinatura faz o nó medir e enviar na hora
+1792866338.798,2026-10-24T18:25:38.798+00:00,desconectado,8C:94:DF:8F:FA:16
+1792866341.432,2026-10-24T18:25:41.432+00:00,encontrado,8C:94:DF:8F:FA:16 rssi=-64 dBm
+1792866342.510,2026-10-24T18:25:42.510+00:00,conectado,8C:94:DF:8F:FA:16
+1792866342.697,2026-10-24T18:25:42.696+00:00,inscrito,a assinatura faz o nó medir e enviar na hora
+1792866678.009,2026-10-24T18:31:18.009+00:00,fim_gravador,8 pacotes nesta execução
+1792868778.838,2026-10-24T19:06:18.838+00:00,inicio_gravador,procurando 'FitoSfera'
+1792868779.493,2026-10-24T19:06:19.493+00:00,encontrado,8C:94:DF:8F:FA:16 rssi=-71 dBm
+1792868780.980,2026-10-24T19:06:20.980+00:00,conectado,8C:94:DF:8F:FA:16
+1792868781.457,2026-10-24T19:06:21.456+00:00,inscrito,a assinatura faz o nó medir e enviar na hora
+1792869091.819,2026-10-24T19:11:31.818+00:00,desconectado,8C:94:DF:8F:FA:16
+1792869112.391,2026-10-24T19:11:52.390+00:00,encontrado,8C:94:DF:8F:FA:16 rssi=-68 dBm
+1792869113.856,2026-10-24T19:11:53.855+00:00,conectado,8C:94:DF:8F:FA:16
+1792869114.086,2026-10-24T19:11:54.086+00:00,inscrito,a assinatura faz o nó medir e enviar na hora
+1792948357.010,2026-10-25T17:12:37.010+00:00,fim_gravador,267 pacotes nesta execução

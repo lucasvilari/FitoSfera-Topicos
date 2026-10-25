@@ -1,0 +1,98 @@
+% =====================================================================
+%  Capítulo 9 — Limitações e próximo ciclo
+% =====================================================================
+\chapter{Limitações e próximo ciclo}
+\label{cap:conclusao}
+\rubricaComunicacao
+
+\section{Limitações conhecidas}
+
+\begin{itemize}
+  \item \textbf{Sem central, sem temperatura e umidade.} O nó não tem fila
+    (\DP{8}). Toda lacuna do conjunto de dados em que o gravador estava
+    parado ou longe é uma lacuna real de temperatura e umidade; só a luz
+    atravessa.
+  \item \textbf{A hora é do central.} Nenhuma leitura tem hora do nó
+    (\DP{10}). O erro é pequeno com notificação, mas o conjunto de dados
+    depende do relógio do computador do gravador estar certo.
+  \item \textbf{Sem segurança.} Sem pareamento, qualquer central ao alcance
+    lê as leituras e pode escrever comandos, inclusive confirmar um pacote
+    que não gravou (Seção~\ref{sec:topicos}).
+  \item \textbf{Um central por vez.} Com o nRF Connect conectado, o gravador
+    não conecta. No produto, isso impede dois celulares da mesma casa de
+    acompanharem o mesmo jardim.
+  \item \textbf{Campanha com o gravador, não com o aplicativo.} O contrato é
+    o mesmo, mas o aplicativo FitoSfera ainda não foi exercitado com o nó.
+  \item \textbf{Precisão dos sensores.} DHT11 com $\pm$\SI{2}{\celsius} e
+    passos de 1\,\% UR; BH1750 com $\pm$20\,\% e resolução menor em luz
+    fraca por causa do MTreg = 31.
+  \item \textbf{Luz amostrada a cada \SI{5}{\minute}.} A integral é
+    grosseira em dias de nuvens passando.
+  \item \textbf{Número mais frágil do relatório:} a corrente média do nó
+    com o BLE ligado (cerca de \SI{46}{\milli\ampere}), que continua sendo
+    estimativa: a equipe não tem medidor USB. Ela responde por
+    cerca de 97\,\% do orçamento de energia.
+  \item \textbf{O que a campanha revelou.} A coleta foi real, num quarto,
+    e durou 24,1\,h: um único ciclo diário, sem nenhum dia de calendário
+    completo. O ambiente foi mexido pela equipe (ar-condicionado, janela,
+    cortinas, lâmpada), e isso aparece na série mais do que o dia lá fora.
+    O DHT11 aquece ao sol direto, e as leituras acima de
+    \SI{40}{\celsius} são do sensor, não do ar. A primeira medida depois de
+    ligar o nó se perde se o gravador demora a reconectar. E dois
+    problemas do lado do computador só apareceram na prática: um processo
+    em segundo plano ignora o Ctrl+C, e o BlueZ pode segurar a conexão de
+    um gravador morto, o que impede o nó de anunciar.
+\end{itemize}
+
+\section{O que entra no próximo ciclo}
+\label{sec:proximo-ciclo}
+
+Na AP3 a equipe vai treinar e embarcar um classificador da condição do
+ambiente do jardim como um todo, e não de uma planta específica: a cada
+leitura, adequado ou em qual condição de estresse (calor, frio, ar seco,
+ar úmido, pouca luz, sol forte). Sobre essa classificação, o aplicativo
+compara o ambiente planta a planta com os valores recomendados de cada
+uma, guardados num banco de dados. Com o modelo embarcado, parte dessa
+comparação pode descer para o próprio nó: por exemplo, o aplicativo
+envia ao nó as faixas das plantas cadastradas e o nó avisa sozinho,
+mesmo sem central por perto, quando o ambiente sai delas. Isso revê a
+\DP{3}, que hoje deixa toda a decisão no aplicativo. Os rótulos vêm de faixas gerais de
+cultivo da literatura e do registro de eventos; a hora do dia e a luz integrada do dia (DLI) entram
+como atributos. A luz do dia exige dias completos, e o conjunto
+formado neste ciclo tem 24,1\,h com 97,6\,\% de completude, mas nenhum
+dia de calendário com mais de 90\,\% das janelas; não é suficiente para
+treinar, porque cada condição aparece uma vez só, e a AP3 começa por uma
+campanha de vários dias. Antes do modelo, três mudanças
+no nó e no contrato:
+
+\begin{enumerate}
+  \item uma fila circular na RAM (um dia, cerca de \SI{5.5}{\kilo\byte}),
+    entregue em lote quando o central assina;
+  \item pareamento com \emph{bonding}, com escrita no comando só para o
+    central pareado;
+  \item o adaptador BLE no aplicativo FitoSfera, seguindo o contrato
+    versão 2, para que a campanha da AP3 rode no celular e não num
+    computador.
+\end{enumerate}
+
+\section{Divisão do trabalho}
+
+Os papéis do \moduloDoCiclo{} sugeridos pela disciplina são integração,
+\emph{firmware} e comunicação, dados (gravador, campanha e qualidade) e
+documentação. Na AP1, Lucas foi hardware, Gabriel foi \emph{firmware} e
+Matheus foi integração e documentação; ninguém repete o papel na AP2.
+
+\begin{itemize}
+  \item \textbf{Lucas Vilarinho} (\emph{firmware} e comunicação): produziu
+    o código do \emph{firmware} e estudou as opções de comunicação,
+    escolhendo o BLE por se alinhar ao aplicativo planejado. O código do
+    BLE entrou no repositório pelo \emph{commit} \texttt{122c41e}, enviado
+    da conta do Gabriel.
+  \item \textbf{Gabriel Araújo} (documentação): estudou o que foi
+    produzido, reuniu no SIGAA os materiais da disciplina e, com os dados
+    gerados pelo grupo, produziu o relatório.
+  \item \textbf{Matheus Carneiro} (dados e integração): organizou os dados
+    da campanha e os integrou ao trabalho.
+\end{itemize}
+
+\imprimirTabelaIntegrantes

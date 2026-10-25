@@ -1,0 +1,57 @@
+% =====================================================================
+%  config/dados-da-equipe.tex
+%  ESTE É O ÚNICO ARQUIVO DE CONFIGURAÇÃO QUE A EQUIPE PRECISA EDITAR.
+%  Leva dois minutos. Faça isso antes de escrever qualquer coisa.
+% =====================================================================
+
+% --- 1. Qual ciclo de projeto este relatório documenta? ---------------
+%     1 = AP1 (sensoriamento e atuação)
+%     2 = AP2 (conectividade e conjunto de dados)
+%     3 = AP3 (projeto integrador de AIoT)
+%     Trocar este número liga e desliga capítulos inteiros do relatório.
+\def\CICLO{2}
+
+% --- 2. Mostrar as instruções cinzas ("Como preencher")? --------------
+%     Mantenha ligado enquanto escreve.
+%     COMENTE a linha abaixo para gerar a versão de entrega.
+% \def\MOSTRARNOTAS{}
+
+% --- 3. Identificação do projeto --------------------------------------
+\newcommand{\tituloProjeto}{FitoSfera}
+\newcommand{\subtituloProjeto}{nó sensor de temperatura, umidade e luz que entrega suas leituras por Bluetooth Low Energy a quem cuida de um pequeno jardim doméstico}
+\newcommand{\nomeEquipe}{FitoSfera}
+\newcommand{\repositorioEquipe}{https://github.com/lucasvilari/FitoSfera-Topicos}
+
+% --- 4. Integrantes ---------------------------------------------------
+%     Uma linha por integrante: \integrante{Nome completo}{Matrícula}{Papel no ciclo}
+%     Papéis do Módulo 1: integração, firmware, hardware, documentação.
+%     Papéis do Módulo 2: integração, firmware e comunicação, dados
+%     (gravador e qualidade), documentação. Os papéis rotacionam:
+%     ninguém repete na AP2 o papel que teve na AP1.
+\newcommand{\listaIntegrantes}{%
+  %   Na AP1: Lucas = hardware; Gabriel = firmware; Matheus = integração e documentação.
+  \integrante{Lucas Vilarinho}{20249011769}{\emph{firmware} e comunicação}
+  \integrante{Gabriel Araújo}{20249022010}{documentação}
+  \integrante{Matheus Carneiro}{20249012336}{dados e integração}
+}
+
+% --- 5. Dados institucionais (normalmente não mudam) ------------------
+\newcommand{\instituicaoCurso}{Universidade Federal do Piauí}
+\newcommand{\unidadeCurso}{Centro de Ciências da Natureza}
+\newcommand{\programaCurso}{Departamento de Computação}
+\newcommand{\nomeDisciplina}{Tópicos em Sistemas Computacionais I --- Internet das Coisas e AIoT}
+\newcommand{\periodoLetivo}{2026.2}
+\newcommand{\docenteDisciplina}{Prof. Atos Apollo Silva Borges}
+\newcommand{\localEntrega}{Teresina}
+\newcommand{\dataEntrega}{25 de outubro de 2026}
+
+% --- 6. Uso de IA generativa ------------------------------------------
+%     A disciplina exige declaração, não proíbe o uso.
+%     Preencha o Apêndice D; aqui vai só o resumo de uma linha.
+\newcommand{\resumoUsoIA}{%
+  A equipe usou IA generativa (Claude, da Anthropic) como apoio no
+  código do \emph{firmware}, para escrever o gravador BLE e as
+  ferramentas de análise, para operar o gravador e os ensaios
+  automáticos na campanha e para redigir este relatório, revisado pela
+  equipe. O detalhamento fica no
+  Apêndice~\ref{ap:ia}.}

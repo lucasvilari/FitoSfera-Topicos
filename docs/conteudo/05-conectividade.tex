@@ -1,0 +1,509 @@
+% =====================================================================
+%  Capítulo 5 — Conectividade e conjunto de dados (existe a partir da AP2)
+%  Versão 2026.2-AP2 (17/10/2026)
+% =====================================================================
+\chapter{Conectividade e conjunto de dados}
+\label{cap:conectividade}
+\rubricaJustificativa
+
+Este capítulo documenta o \moduloDoCiclo: como o nó da AP1 passou a
+falar com o mundo e o que ele coletou na campanha. A equipe escolheu BLE
+e não WiFi. Por isso algumas peças do módulo não existem aqui
+(\emph{broker}, tópicos, testamento MQTT, NTP), e cada seção diz qual é o
+equivalente no BLE e o que ele garante ou deixa de garantir.
+
+% ---------------------------------------------------------------------
+\section{Tecnologia de comunicação}
+\label{sec:tecnologia}
+\rubricaJustificativa
+
+\begin{table}[H]
+\centering
+\caption{Matriz de decisão de conectividade}
+\label{tab:matriz}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}L{2.0cm}L{3.0cm}C{1.45cm}C{1.45cm}C{1.55cm}C{1.55cm}L{2.8cm}@{}}
+\toprule
+\textbf{Critério} & \textbf{O que o projeto exige} & \textbf{WiFi} & \textbf{BLE}
+& \textbf{LoRa\-WAN} & \textbf{NB-IoT, LTE-M} & \textbf{Observação} \\
+\midrule
+Alcance necessário
+  & cerca de \SI{10}{\metre} até o celular, com paredes (Capítulo~\ref{cap:problema})
+  & \serve & \serve & \serve & \serve
+  & BLE medido: 20 a \SI{25}{\metre} com várias paredes; 45 a \SI{50}{\metre} com uma (\CT{21}) \\
+Energia disponível
+  & tomada USB; cerca de \SI{1114}{\milli\ampere\hour}/dia (Apêndice~\ref{ap:energia})
+  & \serve & \serve & \serve & \serve
+  & na tomada nada restringe; na bateria, o pico de TX do WiFi
+    (\SI{240}{\milli\ampere}) é quase o dobro do BLE (\SI{130}{\milli\ampere}) \\
+Dado por transmissão
+  & \SI{19}{\byte} a cada \SI{300}{\second} (\SI{5472}{\byte}/dia)
+  & \serve & \serve & \ressalva & \serve
+  & LoRaWAN: 288 mensagens/dia cabem em \SI{30}{\second} de ar em SF7
+    (\SI{20.7}{\second}), não em SF12 (\SI{521}{\second}) \\
+Latência aceitável
+  & minutos; a planta responde em horas
+  & \serve & \serve & \serve & \serve & nenhuma restringe \\
+Infraestrutura no local
+  & o celular de quem cuida do jardim; a casa tem roteador WiFi
+  & \ressalva & \serve & \naoserve & \naoserve
+  & WiFi exige gravar a senha da rede no nó; LoRa exige \emph{gateway}; NB-IoT exige chip e plano \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe. Correntes de pico de \citeonline{espressif2023}; tempo no ar de LoRaWAN calculado para \SI{32}{\byte} no ar (19 de dados e 13 de cabeçalho), \SI{125}{\kilo\hertz}, CR 4/5.}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Marcas que mudaram desde a AP1}
+\label{tab:mudancas}
+\footnotesize
+\begin{tabular}{@{}L{2.4cm}L{2.2cm}L{2.2cm}L{7.2cm}@{}}
+\toprule
+\textbf{Tecnologia} & \textbf{Na AP1 (19/09)} & \textbf{Agora} & \textbf{O que mudou, com o número} \\
+\midrule
+BLE & não avaliada & escolhida &
+  O contrato BLE fechou o pacote em \SI{19}{\byte}, que cabe numa
+  notificação com o MTU padrão (\DP{7}). Os ensaios com o nRF Connect
+  mostraram que o central é o celular, e que a luz acumulada atravessa uma
+  desconexão de \SI{55}{\minute} sem perda (\DP{8}). O alcance medido, de
+  20 a \SI{25}{\metre} com paredes, é o dobro do que o jardim exige. \\
+WiFi & candidata (AP1, Seção~7.2) & \ressalva &
+  Na AP1 a equipe apontou WiFi porque o ESP32 já o tem. O produto, porém,
+  é um aplicativo de celular: com WiFi o nó precisaria da senha da rede e
+  de um servidor para chegar ao celular, peças que o BLE dispensa. \\
+LoRaWAN & não avaliada & \naoserve &
+  A conta do tempo no ar mostra que o volume cabe em SF7, mas o kit não tem
+  módulo LoRa e não há \emph{gateway} perto; o alcance de quilômetros não
+  é exigido por um jardim doméstico. \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+\begin{decisao}{Tecnologia de comunicação}
+\alternativas{WiFi, BLE, LoRa/LoRaWAN e NB-IoT/LTE-M.}
+\criterio{Distância entre o nó e o primeiro equipamento que recebe o dado;
+  orçamento de energia do Apêndice~\ref{ap:energia}; bytes e frequência das
+  mensagens; infraestrutura existente no local.}
+\escolha{BLE, com o nó como periférico GATT e o celular (no produto) ou o
+  gravador (na campanha) como central.}
+\evidencia{O jardim exige cerca de \SI{10}{\metre} até o celular, e o
+  enlace alcançou 20 a \SI{25}{\metre} dentro de casa, com várias paredes,
+  e 45 a \SI{50}{\metre} com uma parede só (\CT{21}). O nó entrega
+  \SI{19}{\byte} a cada \SI{300}{\second}; na campanha, a completude foi de
+  97,6\,\% (Seção~\ref{sec:qualidade}). O celular já está na casa
+  do usuário: o BLE não exige roteador, senha de rede nem servidor, e o
+  pico de transmissão é de \SI{130}{\milli\ampere}, contra
+  \SI{240}{\milli\ampere} do WiFi \cite{espressif2023} (\folhadedados).}
+\consequencia{O dado só sai do nó quando há um central por perto e ligado.
+  Sem ele, temperatura e umidade se perdem (\DP{8}); não há como consultar
+  o jardim de longe. A escolha deixa de valer se o usuário quiser
+  acompanhar as plantas fora de casa, ou se o nó for para um canteiro a
+  mais de cerca de \SI{20}{\metre} de onde o celular fica, atrás de
+  paredes: aí o WiFi, com o roteador que a casa já tem, passa a ser a
+  tecnologia certa, com o custo de provisionar a senha da rede no nó.}
+\end{decisao}
+
+% ---------------------------------------------------------------------
+\section{Caminho do dado, do sensor ao arquivo}
+\label{sec:caminho}
+\rubricaFuncionalidade
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\sffamily\scriptsize,
+  peca/.style={draw, rounded corners=2pt, align=center, minimum height=1.1cm, minimum width=2.3cm, fill=white, inner sep=3pt},
+  seta/.style={-{Stealth[length=2mm]}, thick},
+  rot/.style={font=\sffamily\tiny, align=center}]
+  \node[peca] (sen) at (0,0)    {DHT11\\BH1750};
+  \node[peca] (no)  at (3.5,0)  {nó ESP32\\no jardim};
+  \node[peca] (pc)  at (8.6,0)  {adaptador Bluetooth\\do PC (BlueZ)};
+  \node[peca] (gr)  at (12.6,0) {\texttt{gravador.py}};
+  \node[peca] (csv) at (8.6,-2.6)  {\texttt{mensagens.csv}\\\texttt{eventos.csv}};
+  \node[peca] (q)   at (3.5,-2.6)  {\texttt{qualidade.py}\\\texttt{limpar.py}};
+  \draw[seta] (sen) -- node[rot, above]{1 fio e\\I\textsuperscript{2}C} (no);
+  \draw[seta] ([yshift=2.5mm]no.east) -- node[rot, above]{BLE \SI{2.4}{\giga\hertz}\\notificação, 19 B} ([yshift=2.5mm]pc.west);
+  \draw[seta] ([yshift=-2.5mm]pc.west) -- node[rot, below]{confirmação\\\texttt{[0x02, seq]}} ([yshift=-2.5mm]no.east);
+  \draw[seta] (pc) -- node[rot, above]{D-Bus\\(\texttt{bleak})} (gr);
+  \draw[seta] (gr.south) |- node[rot, pos=0.25, right]{grava e\\faz \texttt{fsync}} (csv.east);
+  \draw[seta] (csv) -- node[rot, above]{lê} (q);
+\end{tikzpicture}
+\caption{Caminho do dado durante a campanha de coleta. A seta de volta é a confirmação, escrita depois de gravar}
+\label{fig:caminho}
+\fonte{Elaborada pela equipe.}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Onde roda cada peça, e o que acontece se ela parar}
+\label{tab:pecas}
+\footnotesize
+\begin{tabular}{@{}L{2.2cm}L{3.4cm}L{2.6cm}L{5.8cm}@{}}
+\toprule
+\textbf{Peça} & \textbf{Onde rodou} & \textbf{Alimentação} & \textbf{Se parar, o que se perde} \\
+\midrule
+Nó ESP32 & num quarto, junto a uma janela aberta, com sol direto em parte do dia, a \SI{50}{\centi\metre} do chão & carregador USB \SI{5}{\volt} na tomada &
+  tudo o que ele deixaria de medir, e a luz acumulada até ali; o reinício
+  aparece no id do reinício \\
+Enlace BLE & entre o nó e o PC, a cerca de \SI{5}{\metre} & --- &
+  se cai e volta, a assinatura faz o nó medir na hora; temperatura e
+  umidade do intervalo se perdem, a luz não; a sequência mostra quantas
+  leituras faltaram \\
+Gravador & notebook Acer Aspire A515-57 com Linux Mint 22.3 (Cinnamon), dentro da casa & tomada &
+  o mesmo que o enlace: sem \emph{broker} não há quem guarde no meio do
+  caminho. Quem guarda é quem recebe \\
+Arquivo & disco do mesmo computador & --- &
+  cada linha vai para o disco antes da confirmação; um desligamento
+  perde no máximo o pacote que estava chegando, que não foi confirmado \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+A frase do Lab~03, \enquote{o \emph{broker} transporta; quem guarda é
+quem assina}, no BLE fica mais curta: não há quem transporte. O gravador
+é ao mesmo tempo o assinante e o único lugar onde o dado existe depois de
+sair do nó. Por isso ele confirma só depois do \texttt{fsync}
+(\DP{6}), e por isso, durante a campanha, o computador não pode suspender
+nem ficar longe do nó.
+
+% ---------------------------------------------------------------------
+\section{Contrato de dados}
+\label{sec:contrato-dados}
+\rubricaJustificativa
+
+O contrato é o pacote binário de \SI{19}{\byte} da versão 2 do contrato
+BLE, \emph{little-endian}, notificado na característica de leitura. As
+quatro chaves da disciplina (\texttt{id}, \texttt{boot}, \texttt{seq},
+\texttt{ts}) têm equivalente, mas não todas dentro do pacote: o
+\texttt{id} é o endereço BLE do nó, que o gravador anota, e o
+\texttt{ts} é a hora de chegada, porque o nó não tem relógio (\DP{10}).
+
+\begin{table}[H]
+\centering
+\caption{Contrato de dados da telemetria (versão 2)}
+\label{tab:contrato-dados}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}L{3.1cm}L{1.0cm}L{1.4cm}L{1.6cm}L{1.9cm}L{4.9cm}@{}}
+\toprule
+\textbf{Campo} & \textbf{Bytes} & \textbf{Tipo} & \textbf{Unidade} & \textbf{Exemplo} & \textbf{Para que serve} \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{Fora do pacote, anotados pelo gravador}} \\
+\texttt{endereco}     & --- & texto & --- & \texttt{8C:94:DF:} \texttt{8F:FA:16} & o \texttt{id} da disciplina: identifica o nó \\
+\texttt{ts\_recebido} & --- & real  & s (época Unix) & 1792861964 & o \texttt{ts}: hora de chegada no gravador \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{No pacote}} \\
+\texttt{seq}          & 0     & \texttt{uint8}  & --- & 7 & conta os pacotes; o salto denuncia a perda, a repetição a duplicata; volta a 0 depois de 255 \\
+\texttt{id\_reinicio} & 1--2  & \texttt{uint16} & --- & \texttt{0xA1B2} & o \texttt{boot}: sorteado a cada ligamento; separa um reinício de uma perda \\
+\texttt{lux\_min\_acum} & 3--6 & \texttt{uint32} & lux$\cdot$min & 150.000 & luz desde que o nó ligou; a diferença entre dois pacotes é a luz do intervalo \\
+\texttt{seg\_sem\_sucesso} & 7--10 & \texttt{uint32} & s & 1.830 & tempo desde a última confirmação que o nó recebeu \\
+\texttt{temp\_c}      & 11--12 & \texttt{int16}  & \SI{0.01}{\celsius} & 2.514 & temperatura; \texttt{0x8000} = sem leitura \\
+\texttt{umid\_pct}    & 13--14 & \texttt{uint16} & 0,01\,\% & 5.800 & umidade relativa; \texttt{0xFFFF} = sem leitura \\
+\texttt{lux}          & 15--18 & \texttt{uint32} & lux & 20.000 & luz no instante da medida; \texttt{0xFFFFFFFF} = sem leitura \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe, a partir do contrato BLE do README (\enquote{Contrato BLE (versão 2)}).}
+\end{table}
+
+A unidade não está no nome da chave dentro do pacote, porque o pacote não
+tem nomes: ela está no contrato e, no CSV do gravador, no nome da coluna
+(\texttt{temp\_c}, \texttt{umid\_pct}). O pacote de exemplo da tabela é o
+primeiro dos três do README, decodificado pelo \texttt{protocolo.py}.
+
+\begin{lstlisting}[style=terminal, breakatwhitespace=false,
+  caption={Uma mensagem real de telemetria, copiada do \texttt{mensagens.csv}},
+  label={lst:payload}]
+ts_recebido,hora_utc,endereco,tamanho,bytes_hex,seq,id_reinicio,lux_min_acum,seg_sem_sucesso,temp_c,umid_pct,lux
+1792861964.405,2026-10-24T17:12:44.405+00:00,8C:94:DF:8F:FA:16,19,16eaebee4005002c010000cc10540b710f0000,22,60394,344302,300,43.0,29.0,3953
+\end{lstlisting}
+
+\noindent\textbf{Contrato GATT.} O nó anuncia o nome \texttt{FitoSfera} e um
+serviço com duas características
+(Tabela~\ref{tab:topicos}). A mudança da versão 1 para a 2 foi a
+confirmação da aplicação e o campo de segundos sem sucesso: na versão 1 o
+\enquote{enviado} da pilha BLE contava como entrega.
+
+% ---------------------------------------------------------------------
+\section{Contrato GATT e garantias de entrega}
+\label{sec:topicos}
+\rubricaJustificativa
+
+No BLE não há tópicos nem QoS. O papel do contrato de tópicos é feito pelo
+contrato GATT: quais características existem, em que direção o dado anda
+e quem garante o quê.
+
+\begin{table}[H]
+\centering
+\caption{Contrato GATT do nó (o equivalente do contrato de tópicos MQTT)}
+\label{tab:topicos}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}L{3.6cm}L{2.0cm}L{1.8cm}L{2.2cm}L{4.4cm}@{}}
+\toprule
+\textbf{UUID} & \textbf{Direção} & \textbf{Proprie\-dades} & \textbf{Quem usa} & \textbf{Por quê} \\
+\midrule
+\texttt{f1705f3a-0001-\ldots} (serviço) & --- & --- & --- &
+  UUID próprio de 128 bits, anunciado: o gravador acha o nó pelo nome ou pelo serviço \\
+\texttt{f1705f3a-0002-\ldots} (leitura) & nó $\rightarrow$ central & READ, NOTIFY & gravador assina &
+  notificação, e não indicação: a garantia de entrega é a confirmação da aplicação (\DP{6}); antes do primeiro envio tem 0 bytes, para não mostrar leitura velha como atual \\
+\texttt{f1705f3a-0003-\ldots} (comando) & central $\rightarrow$ nó & WRITE, WRITE sem resposta & gravador escreve &
+  \texttt{01} mede agora; \texttt{02} \texttt{NN} confirma o pacote NN. O gravador escreve com resposta, para saber se a confirmação chegou \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe, a partir do contrato BLE do README. Os UUIDs completos terminam em \texttt{-4c7e-9a5b-3d0a6e2b9c10}.}
+\end{table}
+
+\begin{description}[style=unboxed, leftmargin=0pt, font=\normalfont\bfseries]
+  \item[1. Sessão persistente ou limpa, no nó e no gravador.]\hfill\\
+    Não há sessão: o nó não faz \emph{bonding} e não guarda nada sobre o
+    central. Cada conexão começa do zero, e é a assinatura que dispara a
+    entrega do que se acumulou. O equivalente ao \emph{client ID}
+    duplicado é ter dois centrais: o nó aceita um por vez, então com o
+    nRF Connect conectado o gravador não acha o nó. A regra da campanha
+    foi deixar só o gravador.
+  \item[2. O que o nó faz com as leituras quando o central está fora de alcance.]\hfill\\
+    Não há fila (\DP{8}). O nó continua medindo a cada
+    \SI{300}{\second}, a sequência continua andando e a luz continua sendo
+    somada. Na volta, o primeiro pacote traz a luz do período inteiro; as
+    temperaturas e umidades do período se perderam, e a sequência diz
+    quantas foram. Uma fila de um dia caberia em \SI{5.5}{\kilo\byte} de
+    RAM e é a melhoria mais barata para a AP3.
+  \item[3. Keepalive e testamento.]\hfill\\
+    O keepalive do BLE é o \emph{timeout} de supervisão da conexão,
+    escolhido pelo central: se nenhum pacote do enlace chega nesse tempo,
+    os dois lados consideram a conexão perdida. No gravador isso vira o
+    evento \texttt{desconectado}, que é o \enquote{\texttt{offline}} do
+    testamento. Medido na campanha: 3,6 e \SI{5.9}{\second} entre tirar
+    a energia do nó e o evento \texttt{desconectado} (\CT{18}). Como o enlace pode continuar
+    de pé com o \emph{firmware} travado, o gravador tem um segundo vigia:
+    \SI{630}{\second} sem pacote derrubam a conexão. O laço do nó nunca
+    fica parado mais que cerca de \SI{125}{\milli\second} (DHT11 mais
+    BH1750), muito abaixo de qualquer \emph{timeout} de supervisão.
+  \item[4. Segurança mínima.]\hfill\\
+    Nenhuma neste ciclo, e isso é uma limitação declarada
+    (Capítulo~\ref{cap:conclusao}). Qualquer central ao alcance pode
+    conectar, ler as leituras e escrever na característica de comando,
+    inclusive confirmar um pacote que não gravou. Não há credencial no
+    repositório porque não há credencial: nada de \texttt{secrets.h}. O
+    caminho para a AP3 é pareamento com \emph{bonding} e permissões de
+    escrita só para o central pareado.
+\end{description}
+
+% ---------------------------------------------------------------------
+\section{Custo real da comunicação}
+\label{sec:custo-radio}
+\rubricaJustificativa
+
+Na AP1 o rádio estava desligado, e a linha do WiFi entrou como estimativa
+(pico de cerca de \SI{310}{\milli\ampere}). Na AP2 o rádio é BLE e fica
+ligado o tempo todo, anunciando ou conectado. Os tempos abaixo saem do
+relógio do gravador, pelo \texttt{eventos.csv}, e são calculados pelo
+\texttt{qualidade.py}. A equipe não tem medidor USB, então a corrente
+vem da folha de dados (pico) e da estimativa do README (média).
+
+\begin{table}[H]
+\centering
+\caption{Linha do rádio: estimada na AP1 \emph{versus} medida na AP2}
+\label{tab:custo-radio}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}L{3.6cm}R{1.9cm}R{2.1cm}L{3.4cm}L{2.8cm}@{}}
+\toprule
+\textbf{Etapa} & \textbf{Estimado (AP1)} & \textbf{Medido (AP2)} & \textbf{Como foi medido} & \textbf{Origem da corrente} \\
+\midrule
+Busca até achar o nó & --- & \SI{0.7}{\second} & \texttt{nao\_encontrado} e \texttt{encontrado} & --- \\
+Conexão (achado $\rightarrow$ conectado) & --- & \SI{1.1}{\second} & \texttt{qualidade.py}, enlace BLE & --- \\
+Conexão $\rightarrow$ primeiro pacote & --- & \SI{0.3}{\second} & idem & --- \\
+Reconexão depois de queda & --- & \SI{20.1}{\second} & \texttt{desconectado} $\rightarrow$ \texttt{conectado} & --- \\
+Transmissão (pico) & \SI{310}{\milli\ampere} (WiFi) & \SI{130}{\milli\ampere} (BLE) & --- & \folhadedados \\
+Conectado e ocioso (média) & --- & \SI{45}{\milli\ampere} & não medido & \estimativa{} (README) \\
+\midrule
+\textbf{Rádio por dia} & --- & \SI{1080}{\milli\ampere\hour} & \multicolumn{2}{l}{Apêndice~\ref{ap:energia}} \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe. Corrente de pico de \citeonline{espressif2023}.}
+\end{table}
+
+No BLE o custo não está na transmissão, que dura frações de milissegundo
+por pacote de \SI{19}{\byte}, mas em manter o rádio e a CPU acordados para
+anunciar e manter a conexão. Com o nó na tomada isso não restringe; com
+bateria, seria a linha que dimensiona o sistema (Apêndice~\ref{ap:energia}).
+
+% ---------------------------------------------------------------------
+\section{A campanha de coleta}
+\label{sec:campanha}
+\rubricaRobustez
+
+\begin{table}[H]
+\centering
+\caption{Ficha da campanha de coleta}
+\label{tab:campanha}
+\footnotesize
+\begin{tabular}{@{}L{5.0cm}L{9.0cm}@{}}
+\toprule
+\textbf{Item} & \textbf{Valor} \\
+\midrule
+Local de instalação do nó                & num quarto, junto a uma janela aberta, com sol direto em parte do dia, a \SI{50}{\centi\metre} do chão \\
+Início e fim (data e hora)               & 24/10/2026 14:07 a 25/10/2026 14:13 (primeira leitura às 14:07:44, última às 14:12:32) \\
+Duração total                            & 24,1\,h \\
+Período de amostragem                    & \SI{300}{\second} \\
+Leituras esperadas (duração $\div$ período) & 290 \\
+Número de nós                            & 1 \\
+Onde rodou o gravador                    & notebook Acer Aspire A515-57, Linux Mint 22.3 (Cinnamon), Python 3.12.3, na tomada \\
+Como a equipe acompanhou a coleta        & saída do \texttt{gravador.py} no terminal e \texttt{qualidade.py} rodado durante os ensaios e algumas vezes por dia; diário de eventos anotado pela equipe \\
+Coleta real ou simulada                  & real \\
+Por que esta duração basta para a AP3    & temperatura e luz têm ciclo diário: com menos de \SI{24}{\hour}, o conjunto não mostra um dia inteiro. As 24,1\,h cobrem 1 ciclo diário completo \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+As leituras esperadas saem da conta, e não do arquivo: o nó deveria
+entregar uma leitura a cada \SI{300}{\second} durante toda a duração
+declarada. Leituras extras, disparadas pela assinatura a cada reconexão,
+não entram como esperadas; o \texttt{qualidade.py} as conta à parte.
+
+% ---------------------------------------------------------------------
+\section{Qualidade do conjunto de dados}
+\label{sec:qualidade}
+\rubricaRobustez
+
+Os números saem do \texttt{qualidade.py} rodado sobre o arquivo final da
+campanha, e a saída completa está no Apêndice~\ref{ap:campanha}. Como
+cada reconexão reinicia o relógio do ciclo (Seção~\ref{sec:firmware}), as
+leituras não caem numa grade fixa; por isso a completude é calculada por
+janelas: a duração é dividida em janelas de \SI{300}{\second}, e conta-se
+quantas têm pelo menos uma leitura única,
+\[
+  \text{completude}\,[\%] = \frac{\text{janelas de \SI{300}{\second} com leitura}}
+                                 {\text{leituras esperadas}} \times 100.
+\]
+A razão entre leituras únicas do ciclo e leituras esperadas, que é a
+fórmula da disciplina, também é impressa, e as duas ficam próximas quando
+não há muitas reconexões.
+
+\begin{table}[H]
+\centering
+\caption{Qualidade do conjunto de dados coletado}
+\label{tab:qualidade}
+\footnotesize
+\begin{tabular}{@{}L{4.6cm}R{2.0cm}L{7.4cm}@{}}
+\toprule
+\textbf{Métrica} & \textbf{Valor} & \textbf{O que explica o valor} \\
+\midrule
+Leituras esperadas                    & 290 & Tabela~\ref{tab:campanha} \\
+Leituras recebidas (únicas)           & 288 & 287 do ciclo e 1 extra; faltam as 7 da lacuna do \CT{16}, compensadas em parte pelas leituras de reconexão \\
+\quad extras, fora do ciclo           & 1 & a assinatura reinicia o ciclo, então a leitura da reconexão quase sempre toma o lugar da do ciclo; só conta como extra quando chega colada a outra \\
+Faltam (a sequência pulou)            & 12 & o nó mediu e ninguém recebeu: 7 no \CT{16} (gravador parado), 1 no \CT{15} (Bluetooth desligado) e 4 a seq 1 de reinícios, medida \SI{2}{\second} após ligar, antes da reconexão \\
+Repetidas (descartadas)               & 0 & nenhum pacote chegou duas vezes \\
+Reinícios do nó                       & 5 & todos provocados: 4 no \CT{18} (USB arrancado) e 1 no \CT{17} (botão EN) \\
+Leituras sem hora do nó               & todas & o nó não tem relógio; a hora é a de chegada (\DP{10}) \\
+Segundos sem confirmação (mediana · máximo) & 300 · \SI{2138}{\second} & o máximo é o primeiro pacote depois do \CT{16}; perto de \SI{300}{\second}, a confirmação anterior chegou \\
+Campos ausentes (T · UR · luz)        & 0 · 0 · 0 & falhas de sensor depois das 3 tentativas \\
+Mensagens fora do contrato            & 0 & tamanho diferente de \SI{19}{\byte} \\
+\midrule
+\textbf{Completude}                   & \textbf{97,6\,\%} & 283 de 290 janelas com leitura; as 7 vazias são todas da lacuna do \CT{16}. Pela fórmula da disciplina, 287 de 290 (99,0\,\%) \\
+\bottomrule
+\end{tabular}
+\fonte{Saída do \texttt{qualidade.py} sobre \texttt{dados/mensagens.csv}.}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Lacunas do conjunto de dados}
+\label{tab:lacunas}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}L{2.4cm}L{2.4cm}R{1.6cm}R{1.6cm}L{3.0cm}L{2.9cm}@{}}
+\toprule
+\textbf{Início} & \textbf{Fim} & \textbf{Duração} & \textbf{Leituras perdidas} & \textbf{Causa} & \textbf{Tratamento} \\
+\midrule
+24/10 15:30:42 & 24/10 16:06:21 & 35\,min\,39\,s & 7 & \CT{16}: gravador parado de propósito por \SI{35}{\minute}; a luz do intervalo chegou no pacote seguinte & mantida como lacuna \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe, a partir da seção \enquote{Lacunas} do \texttt{qualidade.py} e do diário do Apêndice~\ref{ap:campanha}.}
+\end{table}
+
+O \texttt{qualidade.py} já sugere a causa de cada lacuna pelo que o
+pacote seguinte traz: se o id do reinício mudou, o nó reiniciou; se a
+sequência pulou, o nó mediu e o enlace ou o gravador falharam; se nenhum
+dos dois, o nó deixou de medir. O arquivo de eventos completa a
+explicação (gravador parado, desconexão).
+
+% ---------------------------------------------------------------------
+\section{Descrição do conjunto de dados}
+\label{sec:dataset}
+\rubricaRobustez
+
+O arquivo final é o limpo, \caminho{dados/mensagens_limpo.csv}, gerado do
+bruto do gravador por \caminho{dados/limpar.py}. A limpeza tira as linhas
+fora do contrato e as repetidas, ordena por chegada e acrescenta colunas
+calculadas; nenhum valor é interpolado. O bruto
+(\caminho{dados/mensagens.csv}) e os eventos (\caminho{dados/eventos.csv})
+ficam no repositório ao lado dele.
+
+\begin{table}[H]
+\centering
+\caption{Descrição do conjunto de dados (\texttt{dados/mensagens\_limpo.csv})}
+\label{tab:dataset}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}L{3.0cm}L{1.5cm}L{1.9cm}L{2.6cm}L{5.0cm}@{}}
+\toprule
+\textbf{Campo} & \textbf{Tipo} & \textbf{Unidade} & \textbf{Faixa observada} & \textbf{Observação} \\
+\midrule
+\texttt{ts} & real & s (época Unix) & 1792861664 a 1792948352 & hora de chegada no gravador, relógio do PC \\
+\texttt{hora\_local} & texto & --- & 24/10 14:07:44 a 25/10 14:12:32 & a mesma hora em Teresina (UTC$-$3) \\
+\texttt{id\_reinicio} & texto (hex) & --- & 6 valores & muda a cada ligamento do nó \\
+\texttt{seq} & inteiro & --- & 0 a 255 & volta a 0 depois de 255 \\
+\texttt{temp\_c} & real & \si{\celsius} & 22,6 a 44,4 & vazio = sem leitura; incerteza $\pm$\SI{2}{\celsius} \\
+\texttt{umid\_pct} & real & \% & 26 a 63 & vazio = sem leitura; passos de 1\,\% \\
+\texttt{lux} & inteiro & lux & 0 a 61\,571 & vazio = sem leitura; incerteza $\pm$20\,\% \\
+\texttt{lux\_min\_acum} & inteiro & lux$\cdot$min & 0 a 1\,245\,993 & recomeça em 0 a cada reinício \\
+\texttt{luz\_nova\_lux\_min} & inteiro & lux$\cdot$min & 0 a 267\,969 & diferença do acumulado; é o que se soma para a luz do dia \\
+\texttt{seg\_sem\_sucesso} & inteiro & s & 2 a 2138 & desde a última confirmação recebida pelo nó \\
+\texttt{reinicio} & 0/1 & --- & --- & 1 na primeira leitura de um reinício \\
+\texttt{perdidas\_antes} & inteiro & leituras & 0 a 7 & medidas que o nó fez e ninguém recebeu antes desta \\
+\texttt{extra} & 0/1 & --- & --- & 1 se chegou a menos de meio período da anterior \\
+\texttt{lacuna\_antes\_s} & inteiro & s & 2139 (1 valor) & preenchido quando o intervalo passou de \SI{450}{\second} \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+\noindent Arquivo: \caminho{dados/mensagens_limpo.csv} \quad Tamanho:
+\SI{22.6}{\kilo\byte} \quad Linhas: 288 leituras (mais o cabeçalho) \quad \emph{Commit}:
+\texttt{\pendente{hash}}
+
+\noindent\textbf{O que a equipe quer que um modelo aprenda com estes dados?}
+A classificar a condição do ambiente do jardim como um todo, sem uma
+planta específica. É um problema de classificação: a cada leitura (ou
+janela de leituras), o modelo diz se o ambiente está adequado para um
+jardim em geral ou em que condição de estresse está (calor, frio, ar
+seco, ar úmido, pouca luz, sol forte). Os rótulos vêm de faixas gerais
+de cultivo da literatura e do registro de eventos (Apêndice~\ref{ap:campanha});
+a hora do dia e a luz acumulada (com ela, a luz integrada do dia em
+\si{\mol\per\square\metre}, DLI) entram como atributos, porque a mesma
+leitura pode ser normal ao meio-dia e anormal à noite. A comparação
+planta a planta não é papel do modelo: fica com o aplicativo, que cruza
+a condição do ambiente com os valores recomendados de cada planta,
+guardados num banco de dados (\DP{3}).
+
+\noindent\textbf{O conjunto tem exemplos suficientes disso?} Para treinar,
+ainda não. O que conta é o número de dias completos, porque a luz do dia
+só se mede com um dia inteiro: a campanha teve uma janela contínua de
+24,1\,h com 97,6\,\% de completude, mas nenhum dia de calendário com mais
+de 90\,\% das 288 janelas, porque começou e terminou no meio da tarde
+(117 leituras em 24/10 e 171 em 25/10). Há exemplos de sol direto (até
+\SI{61571}{lux}), de calor (até \SI{44.4}{\celsius}, com o sensor ao
+sol), de noite escura e de resfriamento pelo ar-condicionado (até
+\SI{22.6}{\celsius}), mas cada um aparece uma vez só, e não há frio nem ar
+úmido de verdade (umidade máxima de 63\,\%). O conjunto serve para validar
+o caminho do dado e os atributos; a AP3 precisa de vários dias seguidos,
+de preferência com o nó também fora do quarto. As mudanças bruscas
+(sol direto, sombra, janela aberta) estão anotadas no registro de eventos do
+Apêndice~\ref{ap:campanha}; sem esse registro, a rotulagem de novembro
+vira adivinhação.

@@ -1,0 +1,105 @@
+% =====================================================================
+%  config/estilo.tex
+%  Capa, folha de rosto, metadados e aparência geral.
+%  A equipe não precisa mexer aqui.
+% =====================================================================
+
+% --- Lista de integrantes em três formatos ----------------------------
+\newcommand{\integrante}[3]{}
+
+\newcommand{\imprimirIntegrantesCapa}{%
+  \begingroup
+  \renewcommand{\integrante}[3]{##1\par}%
+  \listaIntegrantes
+  \endgroup}
+
+\newcommand{\imprimirIntegrantesLinha}{%
+  \begingroup
+  \renewcommand{\integrante}[3]{##1; }%
+  \listaIntegrantes
+  \endgroup}
+
+\newcommand{\imprimirTabelaIntegrantes}{%
+  \begingroup
+  \renewcommand{\integrante}[3]{##1 & ##2 & ##3 \\}%
+  \noindent
+  \begin{tabular}{@{}L{7.4cm}L{3.0cm}L{4.2cm}@{}}
+    \toprule
+    \textbf{Integrante} & \textbf{Matrícula} & \textbf{Papel no ciclo} \\
+    \midrule
+    \listaIntegrantes
+    \bottomrule
+  \end{tabular}%
+  \endgroup}
+
+% --- Metadados do abnTeX2 ---------------------------------------------
+\titulo{\tituloProjeto}
+\autor{\nomeEquipe}
+\local{\localEntrega, Piauí}
+\data{\dataEntrega}
+\instituicao{\instituicaoCurso\par\unidadeCurso\par\programaCurso}
+\tipotrabalho{Relatório técnico}
+\orientador[Docente:]{\docenteDisciplina}
+\preambulo{%
+  Relatório técnico do \nomeciclo, apresentado como instrumento da
+  \rotuloAP\ da disciplina \nomeDisciplina, \periodoLetivo,
+  do \programaCurso\ da \instituicaoCurso.}
+
+% --- Links e metadados do PDF -----------------------------------------
+\definecolor{corLink}{HTML}{0B3D91}
+\makeatletter
+\hypersetup{
+  pdftitle    = {\@title},
+  pdfauthor   = {\@author},
+  pdfsubject  = {\nomeDisciplina},
+  pdfkeywords = {IoT}{AIoT}{ESP32}{sistemas embarcados}{UFPI},
+  colorlinks  = true,
+  linkcolor   = corLink,
+  citecolor   = corLink,
+  urlcolor    = corLink,
+  filecolor   = corLink,
+  bookmarksdepth = 4,
+  breaklinks  = true,
+}
+\makeatother
+
+% --- Espaçamentos e listas --------------------------------------------
+\setlrmarginsandblock{3cm}{2cm}{*}
+\setulmarginsandblock{3cm}{2cm}{*}
+\checkandfixthelayout
+\setlength{\parindent}{1.3cm}
+\setlength{\parskip}{0.2cm}
+\setlist{itemsep=1pt, topsep=4pt, parsep=0pt}
+\SingleSpacing
+
+% --- Capa customizada --------------------------------------------------
+\renewcommand{\imprimircapa}{%
+  \begin{capa}
+    \centering
+    \IfFileExists{figuras/logo-ufpi.png}{%
+      \includegraphics[height=2.3cm]{figuras/logo-ufpi.png}\par\vspace{0.6cm}}{}
+    {\sffamily
+      {\large\MakeUppercase{\instituicaoCurso}\par}
+      {\normalsize\MakeUppercase{\unidadeCurso}\par}
+      {\normalsize\MakeUppercase{\programaCurso}\par}}
+    \vspace{1.6cm}
+    {\sffamily\small\MakeUppercase{Equipe \nomeEquipe}\par}
+    \vspace{0.5cm}
+    {\normalsize\imprimirIntegrantesCapa}
+    \vfill
+    {\sffamily\bfseries\LARGE\tituloProjeto\par}
+    \vspace{0.4cm}
+    {\sffamily\large\itshape\subtituloProjeto\par}
+    \vspace{1.2cm}
+    \rule{0.55\textwidth}{0.6pt}\par
+    \vspace{0.6cm}
+    {\sffamily\normalsize Relatório técnico da \rotuloAP\par}
+    {\sffamily\small\nomeciclo\par}
+    \vspace{0.3cm}
+    {\small\nomeDisciplina\par}
+    {\small\periodoLetivo\ \textbullet\ \docenteDisciplina\par}
+    \vfill
+    {\large\localEntrega\par}
+    {\large\dataEntrega\par}
+    \vspace{0.8cm}
+  \end{capa}}

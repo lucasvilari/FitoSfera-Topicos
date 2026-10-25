@@ -1,0 +1,2 @@
+ts_recebido,hora_utc,endereco,tamanho,bytes_hex,seq,id_reinicio,lux_min_acum,seg_sem_sucesso,temp_c,umid_pct,lux
+1792861472.556,2026-10-24T17:04:32.556+00:00,8C:94:DF:8F:FA:16,19,02eaeb93c601008a000000c00d94117b180100,2,60394,116371,138,35.2,45.0,71803

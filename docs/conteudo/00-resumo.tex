@@ -1,0 +1,56 @@
+% =====================================================================
+%  Resumo e abstract
+% =====================================================================
+
+\begin{resumo}
+Quem cultiva plantas em casa decide quando regar ou mudar um vaso de
+lugar pela aparência da planta, e só percebe o problema quando ela já
+murchou. O FitoSfera propõe trocar essa avaliação a olho por medições do
+ambiente, comparadas com o que cada espécie exige. Este relatório
+documenta o segundo ciclo do projeto: a ligação do nó sensor a quem
+guarda o dado e a formação do conjunto de dados. O nó usa um ESP32 com um
+DHT11, para temperatura e umidade do ar, e um sensor de luz BH1750, que
+mede até cerca de 120 mil lux. A cada cinco minutos, ele envia um pacote
+de 19 bytes por Bluetooth Low Energy, com número de sequência, um
+identificador que muda a cada reinício e a luz acumulada desde que ligou,
+de modo que uma desconexão não apaga a luz recebida. A equipe escolheu
+Bluetooth Low Energy e não WiFi porque o central do produto é o celular
+do usuário, que já está na casa. Um gravador escrito pela equipe recebeu
+os pacotes durante 24 horas de campanha, gravou cada um antes de
+confirmá-lo e produziu um conjunto de dados com 97,6\,\% de
+completude. Dezessete requisitos foram verificados por dezoito casos de
+teste, e 15 foram atendidos, 1 em parte e 1 ficou sem verificação. O ponto fraco é que o nó não guarda
+temperatura e umidade quando o central está longe. No próximo ciclo
+entram uma fila local, o pareamento e o aplicativo como central.
+
+\textbf{Palavras-chave}: internet das coisas; ESP32; Bluetooth Low Energy;
+monitoramento de plantas; conjunto de dados.
+\end{resumo}
+
+\begin{resumo}[Abstract]
+\begin{otherlanguage*}{english}
+People who grow plants at home decide when to water a plant or move a pot
+based on how it looks, and notice problems only after it has wilted.
+FitoSfera proposes replacing this judgement by eye with measurements of
+the environment, compared with what each species needs. This report
+documents the project's second cycle: connecting the sensor node to
+whoever stores the data, and building the dataset. The node uses an ESP32
+with a DHT11 for air temperature and humidity and a BH1750 light sensor
+that measures up to about 120 thousand lux. Every five minutes it sends a
+19-byte packet over Bluetooth Low Energy, with a sequence number, an
+identifier that changes at every reboot and the light accumulated since
+power-up, so that a disconnection does not erase the light received. The
+team chose Bluetooth Low Energy over WiFi because the product's central
+is the user's phone, which is already in the house. A recorder written by
+the team received the packets during 24 hours of data
+collection, stored each one before acknowledging it and produced a
+dataset with 97.6\,\% completeness. Seventeen requirements were
+verified by eighteen test cases, and 15 were met, 1 partially and 1 remained unverified. The weak point
+is that the node does not keep temperature and humidity while the central
+is away. The next cycle adds a local queue, pairing and the app as the
+central.
+
+\textbf{Keywords}: internet of things; ESP32; Bluetooth Low Energy; plant
+monitoring; dataset.
+\end{otherlanguage*}
+\end{resumo}

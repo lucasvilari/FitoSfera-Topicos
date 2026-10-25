@@ -1,0 +1,85 @@
+% =====================================================================
+%  Apêndice F — Registro da campanha de coleta (novo na AP2)
+% =====================================================================
+\chapter{Registro da campanha de coleta}
+\label{ap:campanha}
+
+\section*{Diário da campanha}
+\phantomsection
+\addcontentsline{toc}{section}{Diário da campanha}
+
+\begin{table}[H]
+\centering
+\caption{Diário da campanha de coleta}
+\label{tab:diario}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}L{2.4cm}L{4.6cm}L{3.4cm}L{3.6cm}@{}}
+\toprule
+\textbf{Data e hora} & \textbf{O que aconteceu} & \textbf{Como a equipe soube} & \textbf{O que a equipe fez} \\
+\midrule
+24/10 14:07 & nó instalado num quarto, junto a uma janela aberta, a \SI{50}{\centi\metre} do chão; gravador iniciado no notebook, a cerca de \SI{5}{\metre} & --- & --- \\
+24/10 14:17 & \CT{15}: Bluetooth do notebook desligado por \SI{2}{\minute} & diário automático e \texttt{eventos.csv} & nada: o gravador reconectou sozinho às 14:19:49 \\
+24/10 14:34 & \CT{16} automático falhou: o \texttt{kill -INT} foi ignorado e o gravador seguiu gravando & conferência às 15:10, nas leituras que continuaram chegando & corrigiu o \texttt{gravador.py} e trocou o processo às 15:11 \\
+24/10 15:11 & na troca, o BlueZ manteve a conexão do gravador antigo; o nó parou de anunciar & \texttt{nao\_encontrado} no terminal & \texttt{bluetoothctl disconnect}; reconectou às 15:12:44, sem perda \\
+24/10 15:18 a 16:11 & \CT{18}: USB do nó arrancado 4 vezes (15:18, 15:20, 15:22, 16:11) & hora anotada no terminal; \texttt{eventos.csv} & religou o USB; o gravador reconectou sozinho nas quatro \\
+24/10 15:25 & \CT{17}: botão EN & hora anotada no terminal & nada: reconexão em \SI{5.6}{\second} \\
+24/10 15:31 a 16:06 & \CT{16} refeito: gravador parado por \SI{35}{\minute} & diário automático & gravador de volta às 16:06:18 \\
+25/10 00:28 & nó reposicionado (mesma altura, junto à janela, a cerca de \SI{5}{\metre}) & anotação da equipe & nada: a conexão não caiu \\
+25/10 09:05 & nó de volta à posição original & anotação da equipe & --- \\
+25/10 14:12 & fim da coleta (gravador encerrado às 14:12:37) & --- & \texttt{qualidade.py} sobre o arquivo final \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+\section*{Registro de eventos para rotulagem}
+\phantomsection
+\addcontentsline{toc}{section}{Registro de eventos para rotulagem}
+
+O que aconteceu em volta do nó enquanto ele media, com hora: o sol que
+entrou direto no sensor, a sombra, a janela aberta ou fechada, a chuva,
+alguém mexendo no nó. É deste registro que sai a
+rotulagem no Módulo 3.
+
+\begin{table}[H]
+\centering
+\caption{Eventos observados durante a coleta}
+\label{tab:eventos}
+\footnotesize
+\begin{tabular}{@{}L{2.6cm}L{2.6cm}L{5.4cm}L{3.4cm}@{}}
+\toprule
+\textbf{Início} & \textbf{Fim} & \textbf{Evento} & \textbf{Quem anotou, e como} \\
+\midrule
+24/10 14:07 & 24/10 14:55 & sol direto no sensor, janela aberta; DHT11 aquecido pelo sol (até \SI{44.4}{\celsius}) & equipe, conferido nos dados \\
+24/10 14:55 & 24/10 17:53 & sem sol direto; luz natural caindo até o anoitecer & equipe, conferido nos dados \\
+24/10 17:53 & 25/10 00:28 & escuro lá fora; lâmpada do quarto acesa (\SI{15}{lux}) & equipe \\
+24/10 20:34 & 25/10 09:05 & janela e cortinas fechadas; ar-condicionado ligado & equipe \\
+25/10 00:28 & 25/10 09:05 & luz apagada; nó reposicionado no quarto & equipe \\
+25/10 09:05 & 25/10 14:13 & cortinas e janela abertas, ar-condicionado desligado, nó na posição original; sol direto a partir de cerca de 13:55 & equipe, conferido nos dados \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+\section*{Saída do relatório de qualidade}
+\phantomsection
+\addcontentsline{toc}{section}{Saída do relatório de qualidade}
+
+A saída completa do \texttt{qualidade.py} sobre o arquivo final, sem
+edição, gerada pelo comando abaixo, rodado na raiz do repositório. O
+quadro lê \caminho{docs/figuras/qualidade.txt}; enquanto o arquivo não
+existe, mostra um aviso de pendência.
+
+\begin{lstlisting}[style=terminal, numbers=none]
+python gravador/qualidade.py dados/mensagens.csv --eventos dados/eventos.csv \
+    --inicio '2026-10-24 14:07' --fim '2026-10-25 14:13' > dados/qualidade.txt
+cp dados/qualidade.txt docs/figuras/qualidade.txt
+\end{lstlisting}
+
+\IfFileExists{figuras/qualidade.txt}%
+  {\def\arquivoQualidade{figuras/qualidade.txt}}%
+  {\def\arquivoQualidade{figuras/qualidade-pendente.txt}}
+\lstinputlisting[style=terminal,
+  caption={Saída do \texttt{qualidade.py} sobre o arquivo final da campanha},
+  label={lst:qualidade}]{\arquivoQualidade}

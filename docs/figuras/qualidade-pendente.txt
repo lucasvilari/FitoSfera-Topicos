@@ -1,0 +1,1 @@
+[pendente: gerar dados/qualidade.txt e copiar para docs/figuras/qualidade.txt]

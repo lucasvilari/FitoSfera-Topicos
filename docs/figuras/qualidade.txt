@@ -1,0 +1,62 @@
+# qualidade.py sobre dados/mensagens.csv (eventos: dados/eventos.csv)
+
+## Campanha
+inicio                      24/10 14:07:00 (hora de Teresina)
+fim                         25/10 14:13:00
+duracao                     24h06min00s (24.10 h)
+periodo nominal             300 s
+leituras esperadas          290  (duracao / periodo, +1)
+
+## Contagens
+linhas no arquivo           288
+fora do contrato            0  (tamanho diferente de 19 bytes)
+repetidas (descartadas)     0
+leituras unicas             288
+  extras (fora do ciclo)    1  (assinatura ao reconectar ou comando 0x01)
+  no ciclo de 300 s         287
+faltam (a sequencia pulou)  12  (o no mediu, ninguem recebeu)
+reinicios do no             5
+  24/10 15:19:03  novo id 86f1, primeira seq recebida 2
+  24/10 15:20:44  novo id a483, primeira seq recebida 2
+  24/10 15:22:38  novo id 56be, primeira seq recebida 1
+  24/10 15:25:42  novo id 6d2e, primeira seq recebida 2
+  24/10 16:11:54  novo id aef1, primeira seq recebida 2
+leituras sem hora do no     288 de 288  (o no nao tem relogio; hora = chegada no gravador)
+
+## Completude
+janelas de 300 s c/ leitura 283 de 290  -> 97.6 %
+unicas no ciclo / esperadas 287 de 290  -> 99.0 %
+
+## Tempo
+intervalo entre leituras    mediana 300.2 s; min 32.5 s; max 2138.6 s
+seg. sem confirmacao        mediana 300 s; max 2138 s  (no pacote; ~300 s = confirmacao anterior chegou)
+  acima de 360 s            2  (a confirmacao anterior nao chegou ao no)
+
+## Sensores
+temperatura (C)    ausentes    0; fora de 0.0..50.0:   0; observada 22.6 a 44.4
+umidade (%)        ausentes    0; fora de 20.0..90.0:   0; observada 26.0 a 63.0
+luz (lux)          ausentes    0; fora de 0..121557:   0; observada 0 a 61571
+
+## Lacunas (intervalo > 450 s): 1
+24/10 15:30:42 -> 24/10 16:06:21      35min39s  ~6 leituras  o no mediu 7 vez(es) sem entregar; gravador parado
+tempo total em lacunas      35min39s
+
+## Luz integrada por dia (diferenca do acumulado, dia da chegada)
+24/10      959040 lux.min  ~  1.06 mol/m2/dia  (117 leituras de 288 num dia)
+25/10      841416 lux.min  ~  0.93 mol/m2/dia  (171 leituras de 288 num dia)
+
+## Enlace BLE (do arquivo de eventos)
+encontrado -> conectado     mediana 1.1 s; max 1.5 s; n = 9
+conectado -> 1o pacote      mediana 0.3 s; max 0.6 s; n = 9
+desconectado -> conectado   mediana 20.1 s; max 124.0 s; n = 6
+RSSI ao encontrar           mediana -68 dBm; pior -127 dBm; melhor -63 dBm; n = 9
+
+## Eventos do gravador
+encontrado             9
+conectado              9
+inscrito               9
+desconectado           6
+erro                   5
+inicio_gravador        3
+nao_encontrado         3
+fim_gravador           2

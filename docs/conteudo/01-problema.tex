@@ -1,0 +1,171 @@
+% =====================================================================
+%  Capítulo 1 — O problema
+% =====================================================================
+\chapter{O problema}
+\label{cap:problema}
+\rubricaJustificativa
+
+\section{Contexto}
+
+Pequenos jardins, hortas em varanda e vasos dentro de casa são cuidados
+por pessoas que, em geral, não têm formação agronômica. Elas decidem
+quando regar, se devem mover um vaso para perto da janela ou se a planta
+está sofrendo com o calor olhando para a planta. Isso tem dois problemas.
+Primeiro, quando a planta mostra o sintoma (folha murcha, amarelada ou
+queimada), o dano já aconteceu, porque ela responde ao ambiente com horas
+ou dias de atraso. Segundo, o que é adequado depende da espécie: a mesma
+umidade que faz bem a uma samambaia pode fazer mal a uma suculenta no
+vaso ao lado.
+
+Em Teresina a situação é mais difícil. A temperatura fica acima de
+\SI{30}{\celsius} em boa parte do ano e, entre agosto e outubro, na
+estação seca, a umidade relativa do ar cai bastante. Plantas trazidas de
+outras regiões sofrem justamente com essas duas grandezas, e a avaliação
+a olho não percebe a mudança a tempo.
+
+A ideia do projeto surgiu de uma conversa de um dos integrantes com a
+avó, Teresinha, que cuida de plantas no jardim de casa. Ela relatou duas
+dificuldades: lembrar quando foi a última rega de cada planta e saber
+quais são as condições adequadas para cada uma. O integrante conhece de
+perto a rotina dela e mora perto, o que torna o jardim um lugar acessível
+para instalar o nó.
+
+\subsection*{Onde o nó fica, e onde está o primeiro ponto com internet}
+
+Na AP2 o nó saiu da bancada. Ele foi instalado em dois lugares, sempre a
+cerca de \SI{1}{\metre} do chão e ligado a um carregador USB de
+\SI{5}{\volt} na tomada: num quarto fechado, sobre uma mesa, e num jardim
+aberto, fora da casa. A campanha de coleta rodou num quarto, junto a uma janela aberta, com sol direto em parte do dia, com o nó a \SI{50}{\centi\metre} do chão. O primeiro equipamento capaz de receber as
+leituras e levá-las adiante é o \emph{central} BLE: na campanha, o
+notebook que rodou o gravador, a cerca de \SI{5}{\metre} do nó
+(Seção~\ref{sec:caminho}); no produto, o celular de quem cuida do jardim.
+
+A distância máxima com comunicação de sucesso foi de cerca de 20 a
+\SI{25}{\metre} dentro da casa, com várias paredes no caminho, e de cerca
+de 45 a \SI{50}{\metre} no ambiente aberto, com uma parede só (\CT{21}).
+A casa tem WiFi, e o roteador seria o primeiro ponto com internet numa
+solução por WiFi, mas o projeto não depende dele: no BLE o roteador nem
+entra no caminho do dado.
+
+Daí sai o requisito de alcance (\RNF{06}). Num jardim doméstico, o
+celular de quem cuida das plantas fica a no máximo cerca de
+\SI{10}{\metre} do nó, quase sempre com uma ou duas paredes no caminho.
+O enlace medido alcança o dobro disso dentro de casa, então o produto não
+precisa de infraestrutura nova.
+
+\section{Pergunta de projeto}
+
+\begin{quote}
+\textbf{Como podemos} informar agricultores domésticos e donos de
+jardim, com base em medições de temperatura, umidade e luz,
+\textbf{para que} cuidem de cada planta segundo o que a espécie exige,
+\textbf{de modo que} saibam quando regar ou reposicionar um vaso antes
+de a planta mostrar sinais de dano\textbf{?}
+\end{quote}
+
+\section{Quem usa o sistema, e o que muda para essa pessoa}
+
+O usuário é um agricultor doméstico ou dono de jardim, como a Teresinha.
+Pode ser alguém que só quer manter as plantas vivas sem muito esforço, ou
+alguém que cultiva hortaliças e frutos e quer acompanhar o tempo até a
+colheita. Hoje essa pessoa decide pela aparência da planta e pela memória
+(\enquote{acho que reguei anteontem}). Com o FitoSfera, ela passa a
+contar com medições do ambiente onde a planta está, comparadas pelo
+aplicativo com o que a espécie exige, avisos acionáveis
+(\enquote{mover a planta Y para um lugar mais iluminado}) e um registro
+de cada planta.
+
+Quatro características do produto determinam o que o nó precisa fazer.
+É delas que saem os requisitos do Capítulo~\ref{cap:requisitos}:
+
+\begin{table}[H]
+\centering
+\caption{Do produto ao nó sensor}
+\label{tab:produto-no}
+\footnotesize
+\begin{tabular}{@{}L{4.6cm}L{9.4cm}@{}}
+\toprule
+\textbf{Característica do produto} & \textbf{Consequência para o nó} \\
+\midrule
+Monitora umidade, temperatura e luz &
+  Três grandezas. Na AP2 a luz deixou de ser claro/escuro e passou a ser
+  medida em lux (BH1750), porque o que a espécie exige é uma quantidade
+  de luz por dia, e não um estado (\DP{2}). \\
+Compara com o que cada espécie exige &
+  A comparação mudou para o aplicativo, que conhece a planta
+  cadastrada; o nó só mede e entrega (\DP{3}). \\
+Fala com o celular de quem cuida do jardim &
+  O celular é o central: o nó não precisa de roteador, senha de rede nem
+  servidor. O enlace é BLE (\DP{11}). \\
+Registra o que aconteceu, com hora &
+  O nó não tem relógio: quem carimba a hora é o central, na chegada do
+  pacote (\DP{10}). A luz de um período longo sem comunicação não se
+  perde, porque o nó a acumula (\DP{8}). \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+As plantas respondem ao ambiente em horas. Na AP1 o nó lia os sensores a
+cada \SI{2}{\second}, mais de cem vezes o necessário. Na AP2 o período
+passou a \SI{300}{\second} (\DP{9}): continua dez vezes mais rápido que
+o fenômeno e reduz a 288 por dia os pacotes que o rádio precisa entregar.
+
+\section{Escopo deste ciclo}
+
+\noindent\textbf{Está neste ciclo (\moduloDoCiclo):}
+\begin{itemize}
+  \item nó com ESP32 DevKit V1, DHT11 (temperatura e umidade do ar) e
+    BH1750 em I\textsuperscript{2}C (luz em lux, até cerca de
+    \SI{120000}{lux});
+  \item enlace BLE com um serviço próprio: uma característica de leitura
+    (notificação de um pacote binário de \SI{19}{\byte}) e uma de
+    comando (medir agora e confirmar recebimento);
+  \item confirmação de recebimento pela aplicação, luz acumulada no nó e
+    identificação de reinícios e de pacotes perdidos;
+  \item um gravador BLE em Python, que faz o papel do aplicativo durante
+    a campanha e forma o conjunto de dados em CSV;
+  \item a campanha de coleta e a análise de qualidade do conjunto de
+    dados (\texttt{qualidade.py}).
+\end{itemize}
+
+\noindent\textbf{Não está neste ciclo, e por quê:}
+\begin{itemize}
+  \item \textbf{Aplicativo FitoSfera falando com o nó:} o aplicativo
+    ainda não tem o adaptador BLE. Na campanha, o gravador cumpre esse
+    papel e segue o mesmo contrato.
+  \item \textbf{WiFi, MQTT e \emph{broker}:} a equipe escolheu BLE
+    (\DP{11}). Não há \emph{broker}, testamento nem NTP no nó; os
+    equivalentes no BLE estão na Seção~\ref{sec:topicos}.
+  \item \textbf{Pareamento e segurança:} o nó aceita qualquer central ao
+    alcance. Fica para a AP3 (Capítulo~\ref{cap:conclusao}).
+  \item \textbf{LEDs de aviso no nó:} saíram junto com o módulo
+    fotorresistor. O aviso passa a ser do aplicativo (\DP{3}).
+  \item \textbf{Bateria e \emph{deep sleep}:} o nó continua na tomada
+    (Apêndice~\ref{ap:energia}).
+  \item \textbf{Umidade do solo:} continua sendo a grandeza que melhor
+    indica a rega, mas exige uma sonda por vaso.
+\end{itemize}
+
+\section{Soluções existentes}
+
+\begin{itemize}
+  \item \textbf{Sensores comerciais de planta via BLE} (por exemplo, o
+    Xiaomi Flower Care): ficam espetados no vaso e medem umidade do solo,
+    temperatura e luz. Usam a mesma tecnologia que o FitoSfera adotou na
+    AP2, o que confirma que BLE basta para a distância de uma casa. Mas o
+    código é fechado, cada vaso precisa de uma unidade e eles não medem a
+    umidade do ar.
+  \item \textbf{Aplicativos de lembrete de cuidado} (por exemplo,
+    Planta): sugerem rega por calendário e por espécie, mas não medem
+    nada. O lembrete é o mesmo na semana mais úmida e na mais seca do
+    ano, que é o erro que o FitoSfera quer evitar.
+  \item \textbf{Estações de monitoramento e irrigação agrícola:} medem
+    com precisão, mas exigem \emph{gateway}, assinatura e instalação que
+    não cabem numa varanda.
+\end{itemize}
+
+Nenhuma dessas soluções junta, a baixo custo, medições do ambiente e
+comparação para cada espécie no celular do usuário. A arquitetura em
+camadas usada no Capítulo~\ref{cap:arquitetura} segue
+\citeonline{alfuqaha2015}.

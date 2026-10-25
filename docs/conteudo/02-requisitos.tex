@@ -1,0 +1,202 @@
+% =====================================================================
+%  Capítulo 2 — Requisitos e critérios de aceitação
+% =====================================================================
+\chapter{Requisitos e critérios de aceitação}
+\label{cap:requisitos}
+\rubricaRobustez
+
+Os requisitos abaixo descrevem o que o sistema da AP2 faz, conforme
+\caminho{firmware/src/main.cpp} e \caminho{gravador/} no \emph{commit} do
+Capítulo~\ref{cap:implementacao}. O nó mudou bastante desde a AP1: o
+módulo fotorresistor e os três LEDs saíram, o BH1750 entrou, o período
+passou de \SI{2}{\second} para \SI{300}{\second} e o nó ganhou um enlace
+BLE. Por isso parte dos requisitos da AP1 mudou e parte saiu
+(Tabela~\ref{tab:req-mudancas}). Os números foram mantidos, para que a
+rastreabilidade com o relatório anterior não se perca. Cada requisito
+tem um caso de teste no Capítulo~\ref{cap:testes}, e os procedimentos
+completos estão no Apêndice~\ref{ap:testes}.
+
+\section{Requisitos funcionais}
+
+\begin{table}[H]
+\centering
+\caption{Requisitos funcionais do \nomeciclo}
+\label{tab:rf}
+\footnotesize
+\begin{tabular}{@{}L{1.4cm}L{6.0cm}L{6.6cm}@{}}
+\toprule
+\textbf{ID} & \textbf{O sistema deve\ldots} & \textbf{Critério de aceitação} \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Sensoriamento (mudaram na AP2)}} \\
+RF-01 & ler temperatura, umidade do ar e luz a cada \SI{300}{\second}
+      & na campanha, mediana dos intervalos entre leituras do ciclo em
+        \SI{300}{\second} $\pm$ 10\,\%, calculada pelo
+        \texttt{qualidade.py} \\
+RF-02 & medir a luz em lux, sem saturar sob sol direto
+      & sob sol direto, leitura válida acima de \SI{54612}{lux}
+        (o teto do BH1750 na sensibilidade de fábrica) \\
+RF-05 & enviar cada leitura também pela porta serial, numa linha CSV com
+        7 campos
+      & 10 de 10 linhas de dados lidas por um leitor de CSV, com 7 campos \\
+RF-06 & tentar de novo, a cada \SI{5}{\second} e até 3 vezes, quando um
+        sensor falha; na última, enviar o que houver, com os campos
+        ausentes marcados
+      & com o fio de dados do DHT11 solto: 3 linhas \texttt{\# nova
+        tentativa} e um pacote com temperatura \texttt{0x8000} e umidade
+        \texttt{0xFFFF}; o nó não trava e volta a ler quando o fio volta \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Comunicação (novos na AP2)}} \\
+RF-07 & notificar ao central inscrito, a cada leitura, um pacote de
+        \SI{19}{\byte} no contrato da Seção~\ref{sec:contrato-dados}
+      & na campanha, nenhuma linha fora do contrato no
+        \texttt{qualidade.py}; os três pacotes de exemplo do README
+        decodificados sem erro \\
+RF-08 & medir e enviar na hora quando o central assina a notificação ou
+        escreve \texttt{0x01} no comando
+      & 10 de 10 pedidos respondidos com um pacote de sequência nova em
+        até \SI{2}{\second} (sem falha de sensor) \\
+RF-09 & zerar o contador de segundos sem sucesso só quando chega a
+        confirmação \texttt{[0x02,} \texttt{seq]} do pacote em espera
+      & com confirmação, o pacote seguinte traz o contador perto de
+        \SI{300}{\second}; sem confirmação, o contador continua crescendo \\
+RF-10 & gravar cada pacote no disco antes de confirmá-lo, e reconectar
+        sozinho depois de uma queda
+      & depois de o nó voltar a anunciar, o gravador reconecta em até
+        \SI{90}{\second}, sem intervenção; todo pacote confirmado está no
+        CSV \\
+RF-11 & deixar cada reinício do nó identificável no conjunto de dados
+      & depois de apertar EN: id do reinício novo, sequência de volta a 1
+        e acumulado de luz de volta a 0; o \texttt{qualidade.py} conta 1
+        reinício, 0 repetidas e 0 perdas falsas \\
+RF-12 & acumular a luz no nó, de modo que um período sem comunicação não
+        perca a luz recebida
+      & depois de uma desconexão de pelo menos \SI{30}{\minute}, a
+        diferença entre dois acumulados cobre o período inteiro, sem
+        contar em dobro \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+\section{Requisitos não funcionais}
+
+\begin{table}[H]
+\centering
+\caption{Requisitos não funcionais}
+\label{tab:rnf}
+\footnotesize
+\begin{tabular}{@{}L{1.4cm}L{4.8cm}L{3.4cm}L{4.4cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Atributo} & \textbf{Valor alvo} & \textbf{Como se verifica} \\
+\midrule
+RNF-01 & Corrente média na entrada USB, com o BLE ligado
+       & $\leq$ \SI{100}{\milli\ampere} (20\,\% da USB 2.0)
+       & medidor USB em série, \CT{07}; Apêndice~\ref{ap:energia} \\
+RNF-04 & Uso de pinos com restrição (inicialização, \emph{flash}, UART0)
+       & nenhum & inspeção contra a folha de dados, \CT{10} \\
+RNF-05 & Operação contínua sem travar, com poucas leituras inválidas
+       & $\geq$ \SI{24}{\hour}; campos ausentes $\leq$ 5\,\%
+       & campanha, \CT{22} \\
+RNF-06 & Alcance do enlace dentro de casa, com paredes no caminho
+       & $\geq$ \SI{10}{\metre}
+       & afastar o nó do central até a comunicação falhar, \CT{21} \\
+RNF-07 & Completude do conjunto de dados
+       & $\geq$ 90\,\% das janelas de \SI{300}{\second}
+       & \texttt{qualidade.py} sobre o arquivo final, \CT{22} \\
+RNF-08 & Tempo até o gravador perceber que o nó caiu
+       & $\leq$ \SI{10}{\second} sem energia; $\leq$ \SI{630}{\second}
+         com o nó travado e o enlace de pé
+       & \texttt{eventos.csv}, \CT{18} \\
+RNF-09 & Tamanho do pacote
+       & $\leq$ \SI{20}{\byte}, o que cabe numa notificação com o MTU
+         padrão de \SI{23}{\byte}
+       & inspeção do código e do nRF Connect, \CT{23} \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Requisitos da AP1 que mudaram ou saíram}
+\label{tab:req-mudancas}
+\footnotesize
+\begin{tabular}{@{}L{1.4cm}L{4.6cm}L{8.0cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Na AP1} & \textbf{Na AP2, e por quê} \\
+\midrule
+RF-01  & ler T e UR a cada \SI{2}{\second} & passa a \SI{300}{\second} e inclui a luz (\DP{9}) \\
+RF-02  & claro/escuro e LED verde & luz em lux pelo BH1750; o LED saiu (\DP{2}) \\
+RF-03  & LED vermelho se $T < \SI{25}{\celsius}$ & \textbf{retirado}: os LEDs saíram e o aviso passa ao aplicativo (\DP{3}) \\
+RF-04  & LED amarelo se UR $< 50\,\%$ & \textbf{retirado}, pelo mesmo motivo \\
+RF-05  & CSV com 4 campos & CSV com 7 campos: entram lux, acumulado, segundos sem sucesso e situação do envio \\
+RF-06  & descartar NaN do DHT11 & tentar de novo e enviar com campos ausentes marcados; a falha de um sensor não descarta os outros (corrige a falha 4 da Seção~5.3 da AP1) \\
+RNF-01 & $\leq$ \SI{100}{\milli\ampere} com 3 LEDs & mesmo alvo, agora com o BLE ligado e sem LEDs \\
+RNF-02 & $\leq$ \SI{12}{\milli\ampere} por GPIO & \textbf{retirado}: não há mais GPIO de saída \\
+RNF-03 & aviso em $\leq$ \SI{4}{\second} & \textbf{retirado}: o aviso é do aplicativo; o tempo de resposta do nó virou \RF{08} \\
+RNF-05 & $\geq$ \SI{8}{\hour} contínuas & $\geq$ \SI{24}{\hour}, a duração mínima para ver um ciclo diário \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+\section{Restrições}
+
+\begin{itemize}
+  \item \textbf{Componentes disponíveis:} ESP32 DevKit V1, DHT11 e
+    BH1750 (módulo GY-302). A precisão do DHT11 (\SI{1}{\celsius} de
+    resolução, $\pm$\SI{2}{\celsius} de incerteza) continua sendo uma
+    restrição aceita, e não uma escolha (\DP{1}).
+  \item \textbf{Tensão de \SI{3.3}{\volt}:} os dois módulos ficam no
+    \SI{3.3}{\volt} da placa, e não no VIN.
+  \item \textbf{Um central por vez:} o NimBLE para de anunciar quando um
+    central conecta. Durante a campanha, o nRF Connect precisa ficar
+    fechado, ou o gravador não consegue conectar.
+  \item \textbf{Sem aplicativo pronto:} o adaptador BLE do aplicativo
+    FitoSfera ainda não existe. A campanha usa o gravador, que segue o
+    mesmo contrato.
+  \item \textbf{O central precisa ficar ligado e perto:} sem central não
+    há registro de temperatura e umidade (\DP{8}). Na campanha isso
+    significa um computador ligado, sem suspender, a no máximo cerca de
+    20 a \SI{25}{\metre} do nó dentro de casa (\CT{21}).
+  \item \textbf{Prazo:} a campanha coube entre 24/10
+    e 25/10, o que limita o número de ciclos diários no conjunto de dados.
+\end{itemize}
+
+\section{Rastreabilidade}
+\label{sec:rastreabilidade}
+
+\begin{table}[H]
+\centering
+\caption{Rastreabilidade entre requisitos, implementação e testes}
+\label{tab:rastreabilidade}
+\footnotesize
+\begin{tabular}{@{}L{1.8cm}L{5.6cm}L{2.6cm}L{3.6cm}@{}}
+\toprule
+\textbf{Requisito} & \textbf{Onde foi atendido} & \textbf{Caso de teste} & \textbf{Situação} \\
+\midrule
+RF-01  & Seção~\ref{sec:firmware}; \DP{4}, \DP{9}             & \CT{01} & \aprovado \\
+RF-02  & Seção~\ref{sec:sinal}; \DP{2}                        & \CT{02} & \aprovado \\
+RF-05  & Seção~\ref{sec:firmware}                             & \CT{05} & \aprovado \\
+RF-06  & Seção~\ref{sec:falha}                                & \CT{06} & \aprovado \\
+RF-07  & Seção~\ref{sec:contrato-dados}; \DP{7}               & \CT{12} & \aprovado \\
+RF-08  & Seção~\ref{sec:fw-comunicacao}                       & \CT{13} & \aprovado \\
+RF-09  & Seção~\ref{sec:fw-comunicacao}; \DP{6}               & \CT{14} & \aprovado \\
+RF-10  & Seção~\ref{sec:gravador}                             & \CT{15}, \CT{16} & \parcial \\
+RF-11  & Seção~\ref{sec:fw-comunicacao}                       & \CT{17} & \aprovado \\
+RF-12  & Seção~\ref{sec:fw-comunicacao}; \DP{8}               & \CT{20} & \aprovado \\
+RNF-01 & Apêndice~\ref{ap:energia}                            & \CT{07} & \naoverificado \\
+RNF-04 & Apêndice~\ref{ap:barramento}; \DP{5}                 & \CT{10} & \aprovado \\
+RNF-05 & Seções~\ref{sec:falha} e \ref{sec:qualidade}         & \CT{22} & \aprovado \\
+RNF-06 & Seção~\ref{sec:tecnologia}; \DP{11}                  & \CT{21} & \aprovado \\
+RNF-07 & Seção~\ref{sec:qualidade}                            & \CT{22} & \aprovado \\
+RNF-08 & Seção~\ref{sec:topicos}                              & \CT{18} & \aprovado \\
+RNF-09 & Seção~\ref{sec:contrato-dados}; \DP{7}               & \CT{23} & \aprovado \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+Os vereditos vêm dos ensaios com o nRF Connect feitos antes da campanha,
+dos ensaios cronometrados com o gravador e da própria campanha
+(Seção~\ref{sec:testes-casos}).

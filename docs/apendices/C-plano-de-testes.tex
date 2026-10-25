@@ -1,0 +1,264 @@
+% =====================================================================
+%  Apêndice C — Plano de testes
+% =====================================================================
+\chapter{Plano de testes}
+\label{ap:testes}
+
+Um quadro por caso de teste. Os ensaios com o gravador usam
+\caminho{gravador/gravador.py} gravando em \caminho{dados/}, e os números saem
+do comando abaixo. Os registros seriais usam o monitor do PlatformIO,
+rodado na pasta \caminho{firmware/}. As evidências ficam na pasta
+\caminho{ensaios/} do repositório. Para um ensaio isolado, o gravador pode
+gravar num arquivo próprio, para não misturar o ensaio com a campanha.
+
+\begin{lstlisting}[style=terminal, numbers=none]
+python gravador/qualidade.py dados/mensagens.csv --eventos dados/eventos.csv
+pio device monitor -b 115200 -f time -f log2file
+python gravador/gravador.py --saida ensaios/ct17.csv --eventos ensaios/ct17-eventos.csv
+\end{lstlisting}
+
+% Um quadro de caso de teste: \begin{quadroCT}{número}{título} ... \end{quadroCT}
+\newenvironment{quadroCT}[2]{%
+  \begin{table}[H]
+  \centering
+  \caption{CT-#1 --- #2}
+  \label{tab:ct#1}
+  \footnotesize
+  \setlength{\tabcolsep}{3.5pt}
+  \begin{tabular}{@{}L{3.0cm}L{12.0cm}@{}}
+  \toprule}{%
+  \bottomrule
+  \end{tabular}
+  \fonte{Elaborada pela equipe.}
+  \end{table}}
+\newcommand{\linhaCT}[2]{\textbf{#1} & #2 \\}
+
+\begin{quadroCT}{01}{período de leitura}
+\linhaCT{Requisito verificado}{\RF{01}}
+\linhaCT{Objetivo}{Verificar que as leituras do ciclo saem a cada \SI{300}{\second} $\pm$ 10\,\%.}
+\linhaCT{Material}{\caminho{dados/mensagens.csv} da campanha.}
+\linhaCT{Procedimento}{1. Rodar o \texttt{qualidade.py} sobre o arquivo final.\newline
+  2. Ler a linha \texttt{intervalo} \texttt{entre} \texttt{leituras} (mediana, mínimo e máximo, sem as leituras extras).}
+\linhaCT{Resultado esperado}{Mediana entre \SI{270}{\second} e \SI{330}{\second}.}
+\linhaCT{Resultado obtido}{Mediana \SI{300.2}{\second}; mínimo \SI{32.5}{\second} (uma reconexão logo depois de uma leitura do ciclo); máximo \SI{2138.6}{\second}, a lacuna do \CT{16}.}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{Saída do \texttt{qualidade.py} no Apêndice~\ref{ap:campanha}.}
+\end{quadroCT}
+
+\begin{quadroCT}{02}{luz sob sol direto}
+\linhaCT{Requisito verificado}{\RF{02}}
+\linhaCT{Objetivo}{Verificar que o BH1750 não satura sob sol pleno com MTreg = 31.}
+\linhaCT{Material}{Nó, nRF Connect ou gravador, um dia de sol.}
+\linhaCT{Procedimento}{1. Levar o nó ao sol direto, perto do meio-dia.\newline
+  2. Pedir uma leitura com \texttt{01} e anotar o lux.\newline
+  3. Repetir 3 vezes.}
+\linhaCT{Resultado esperado}{Lux válido (diferente de \texttt{0xFFFFFFFF}) acima de \SI{54612}{lux}, e abaixo de \SI{121557}{lux}.}
+\linhaCT{Resultado obtido}{Nó junto à janela, ao sol direto, em 24/10 às 14h06: 70\,619, 70\,682 e \SI{70530}{lux}. No teste de fumaça, 2 min antes, \SI{71803}{lux}.}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{\caminho{ensaios/ct13-14-02.csv}, linhas do CT-02.}
+\end{quadroCT}
+
+\begin{quadroCT}{05}{formato CSV na serial}
+\linhaCT{Requisito verificado}{\RF{05}}
+\linhaCT{Objetivo}{Verificar que as linhas de dados da serial são CSV válido com 7 campos.}
+\linhaCT{Material}{Nó no cabo USB, monitor serial, Python.}
+\linhaCT{Procedimento}{1. Registrar 10 linhas de dados (pedir leituras com \texttt{01} para não esperar \SI{50}{\minute}).\newline
+  2. Tirar as linhas que começam por \texttt{\#}.\newline
+  3. Ler como CSV, com a linha de cabeçalho do \texttt{setup()}.}
+\linhaCT{Resultado esperado}{10 de 10 linhas com 7 campos.}
+\linhaCT{Resultado obtido}{Em 25/10, 14h20, com o nó na USB do notebook e o \texttt{gravador/ct05.py} pedindo 10 leituras pelo BLE: cabeçalho presente e 11 de 11 linhas de dados com 7 campos, nenhuma linha \texttt{\#} depois do cabeçalho. Antes dele só há a saída da ROM no boot. O script abre a serial com DTR e RTS soltos: ativos, eles seguram o ESP32 em reset.}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{\caminho{ensaios/ct05.log}}
+\end{quadroCT}
+
+\begin{quadroCT}{06}{falha de sensor}
+\linhaCT{Requisito verificado}{\RF{06}}
+\linhaCT{Objetivo}{Verificar que o nó tenta de novo, envia com campos ausentes e volta sozinho.}
+\linhaCT{Material}{Nó, monitor serial, nRF Connect.}
+\linhaCT{Procedimento}{1. Com o nó medindo, soltar o fio amarelo (DATA do DHT11) da porta D18.\newline
+  2. Pedir uma leitura com \texttt{01}.\newline
+  3. Conferir na serial as linhas \texttt{\#} \texttt{nova} \texttt{tentativa} \texttt{em} \texttt{5} \texttt{s} e o pacote enviado.\newline
+  4. Reconectar o fio e pedir outra leitura.}
+\linhaCT{Resultado esperado}{3 tentativas a cada \SI{5}{\second}; pacote com \texttt{0x8000} e \texttt{0xFFFF} nos campos do DHT11 e lux válido; leitura normal depois de reconectar, sem reiniciar.}
+\linhaCT{Resultado obtido}{Conforme o esperado, no ensaio com o nRF Connect registrado no README (\enquote{nova tentativa em 5 s quando um sensor falha}).}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{README, seção \enquote{Estado da validação}.}
+\end{quadroCT}
+
+\begin{quadroCT}{07}{corrente média na USB}
+\linhaCT{Requisito verificado}{\RNF{01}}
+\linhaCT{Objetivo}{Medir a corrente média do nó com o BLE ligado e comparar com o orçado.}
+\linhaCT{Material}{Medidor USB em série, nó, gravador conectado.}
+\linhaCT{Procedimento}{1. Ligar o nó pelo medidor USB.\newline
+  2. Anotar a corrente média por \SI{60}{\second} sem central (anunciando).\newline
+  3. Repetir com o gravador conectado.}
+\linhaCT{Resultado esperado}{Até \SI{100}{\milli\ampere} nos dois casos; perto de \SI{46}{\milli\ampere} orçados.}
+\linhaCT{Resultado obtido}{Não medido: a equipe não tem medidor USB. O valor do Apêndice~\ref{ap:energia} (\SI{46}{\milli\ampere}) continua sendo estimativa.}
+\linhaCT{Veredito}{\naoverificado}
+\linhaCT{Evidência}{---}
+\end{quadroCT}
+
+\begin{quadroCT}{10}{pinos com restrição}
+\linhaCT{Requisito verificado}{\RNF{04}}
+\linhaCT{Objetivo}{Confirmar que nenhum GPIO usado tem restrição de inicialização, está na \emph{flash} ou é a UART0.}
+\linhaCT{Material}{\caminho{firmware/src/main.cpp}, Apêndice~\ref{ap:barramento}, folha de dados do ESP32 \cite{espressif2023}.}
+\linhaCT{Procedimento}{1. Listar os pinos definidos no código: \texttt{PINO\_DHT} = 18, \texttt{PINO\_SDA} = 21, \texttt{PINO\_SCL} = 22.\newline
+  2. Conferir cada um contra GPIO0, 2, 5, 12 e 15 (inicialização), GPIO6 a 11 (\emph{flash}), GPIO1 e 3 (UART0) e GPIO34 a 39 (só entrada).}
+\linhaCT{Resultado esperado}{Nenhum pino usado nas listas.}
+\linhaCT{Resultado obtido}{Nenhum dos 3 pinos aparece nas listas; GPIO18, que é bidirecional, está fora da faixa só de entrada.}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{Este quadro e a Tabela~\ref{tab:barramento}.}
+\end{quadroCT}
+
+\begin{quadroCT}{12}{pacote no contrato}
+\linhaCT{Requisito verificado}{\RF{07}}
+\linhaCT{Objetivo}{Verificar que os pacotes seguem o contrato de \SI{19}{\byte} e são decodificados sem ambiguidade.}
+\linhaCT{Material}{\caminho{gravador/test_protocolo.py}, nRF Connect, \caminho{dados/mensagens.csv}.}
+\linhaCT{Procedimento}{1. Rodar \texttt{python3} \texttt{-m} \texttt{unittest} \texttt{discover} \texttt{gravador}.\newline
+  2. Ler a característica de leitura no nRF Connect e conferir o tamanho.\newline
+  3. Na campanha, ler \texttt{fora} \texttt{do} \texttt{contrato} no \texttt{qualidade.py}.}
+\linhaCT{Resultado esperado}{Os 3 exemplos do README decodificados com os valores da tabela; 19 bytes no nRF Connect; 0 fora do contrato.}
+\linhaCT{Resultado obtido}{Testes automáticos: 5 de 5 do decodificador passando. nRF Connect: pacotes de 19 bytes. Gravador (teste de fumaça e ensaios): 19 de 19 pacotes com \SI{19}{\byte}. Campanha: 0 fora do contrato em 288 pacotes.}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{Saída do \texttt{unittest}; Apêndice~\ref{ap:campanha}.}
+\end{quadroCT}
+
+\begin{quadroCT}{13}{medir agora e assinatura}
+\linhaCT{Requisito verificado}{\RF{08}}
+\linhaCT{Objetivo}{Verificar que o nó mede e envia na hora a pedido do central.}
+\linhaCT{Material}{nRF Connect ou gravador; cronômetro (ou os carimbos do gravador).}
+\linhaCT{Procedimento}{1. Conectar e assinar a notificação; anotar o instante e o do pacote que chega.\newline
+  2. Escrever \texttt{01} no comando 10 vezes, com alguns segundos entre elas, anotando cada instante.\newline
+  3. Conferir que cada pacote tem a sequência seguinte.}
+\linhaCT{Resultado esperado}{10 de 10 pacotes novos em até \SI{2}{\second}.}
+\linhaCT{Resultado obtido}{nRF Connect: a assinatura dispara um envio imediato, e cada \texttt{01} traz um pacote com a sequência seguinte (README). Com o \texttt{gravador/ensaio.py} (24/10, 14h05): a assinatura trouxe um pacote em \SI{0.47}{\second}; 10 de 10 \texttt{01} trouxeram pacote novo, sequências 8 a 17 sem salto, latência mediana \SI{0.166}{\second} e máxima \SI{0.215}{\second}.}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{README, \enquote{Estado da validação}; \caminho{ensaios/ct13-14-02.csv}.}
+\end{quadroCT}
+
+\begin{quadroCT}{14}{confirmação}
+\linhaCT{Requisito verificado}{\RF{09}}
+\linhaCT{Objetivo}{Verificar que só a confirmação do pacote em espera zera o contador de segundos sem sucesso.}
+\linhaCT{Material}{nRF Connect.}
+\linhaCT{Procedimento}{1. Receber um pacote de sequência NN e não confirmar; pedir outro com \texttt{01} e anotar o contador.\newline
+  2. Confirmar com \texttt{02} \texttt{NN} o pacote recebido; pedir outro e anotar o contador.}
+\linhaCT{Resultado esperado}{Sem confirmação, o contador cresce; com ela, volta perto de zero no pacote seguinte.}
+\linhaCT{Resultado obtido}{Com o \texttt{gravador/ensaio.py} (24/10, 14h05): sem confirmar, o contador foi de 114 a 117 e \SI{121}{\second}; depois de \texttt{02} com a sequência errada, \SI{124}{\second}; depois de \texttt{02} com a sequência do pacote em espera, \SI{3}{\second} no pacote seguinte.}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{README, \enquote{Estado da validação}; \caminho{ensaios/ct13-14-02.csv}; na campanha, a linha \texttt{seg.} \texttt{sem} \texttt{confirmacao} do \texttt{qualidade.py}.}
+\end{quadroCT}
+
+\begin{quadroCT}{15}{queda do enlace}
+\linhaCT{Requisito verificado}{\RF{10} (teste mínimo da AP2: \enquote{queda do WiFi})}
+\linhaCT{Objetivo}{Verificar que o gravador volta sozinho depois de uma queda do enlace, e medir o que se perdeu.}
+\linhaCT{Material}{Gravador rodando e conectado; terminal no computador do gravador.}
+\linhaCT{Procedimento}{1. Anotar a hora e rodar \texttt{bluetoothctl} \texttt{power} \texttt{off}.\newline
+  2. Esperar \SI{2}{\minute} e rodar \texttt{bluetoothctl} \texttt{power} \texttt{on}.\newline
+  3. Não mexer no gravador. Anotar a hora do \texttt{conectado} seguinte no \texttt{eventos.csv}.}
+\linhaCT{Resultado esperado}{\texttt{desconectado}, buscas sem sucesso, \texttt{conectado} em até \SI{90}{\second} depois do \texttt{power} \texttt{on} e um pacote extra imediato; nenhuma leitura perdida se a queda for menor que \SI{300}{\second} desde a última leitura.}
+\linhaCT{Resultado obtido}{24/10: \texttt{power} \texttt{off} às 14:17:41; \texttt{desconectado} às 14:17:44,8; cinco tentativas com o adaptador desligado; \texttt{power} \texttt{on} às 14:19:41; \texttt{encontrado} às 14:19:47,9 e \texttt{conectado} às 14:19:48,9, \SI{7.2}{\second} depois, com o pacote extra \SI{0.3}{\second} depois. A sequência pulou de 22 para 24: o \texttt{power off} caiu \SI{297}{\second} depois da última leitura, e o ciclo seguinte aconteceu com o rádio desligado. Sem lacuna acima de \SI{450}{\second}.}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{\caminho{dados/eventos.csv} e \caminho{ensaios/diario-automatico.txt}.}
+\end{quadroCT}
+
+\begin{quadroCT}{16}{o gravador para}
+\linhaCT{Requisito verificado}{\RF{10} (teste mínimo da AP2)}
+\linhaCT{Objetivo}{Ver o que se perde quando quem guarda o dado para.}
+\linhaCT{Material}{Gravador rodando.}
+\linhaCT{Procedimento}{1. Parar o gravador com Ctrl+C e anotar a hora.\newline
+  2. Esperar pelo menos \SI{15}{\minute} (três ciclos).\newline
+  3. Rodar o gravador de novo, gravando no mesmo arquivo.\newline
+  4. Rodar o \texttt{qualidade.py}.}
+\linhaCT{Resultado esperado}{Por projeto (\DP{8}): lacuna no CSV, a sequência mostrando cerca de 3 leituras que o nó fez sem ninguém ouvindo, e o primeiro pacote da volta trazendo a luz do intervalo inteiro. O critério da disciplina, \enquote{sem buraco no CSV}, não é atendido.}
+\linhaCT{Resultado obtido}{Gravador parado às 15:31:15 e de volta às 16:06:18 (24/10). Lacuna de 35\,min\,39\,s; 7 leituras perdidas pela sequência (4 a 10); primeiro pacote com \texttt{seg\_sem\_sucesso} = \SI{2138}{\second} e \SI{16240}{lux\cdot\minute} novos, média de \SI{456}{lux} no intervalo, coerente com 569 e \SI{419}{lux} antes e depois. A primeira tentativa (14:34) falhou porque o \texttt{kill -INT} foi ignorado pelo gravador em segundo plano; corrigido no \texttt{gravador.py}.}
+\linhaCT{Veredito}{\parcial}
+\linhaCT{Evidência}{Saída do \texttt{qualidade.py}; \texttt{eventos.csv} com \texttt{fim\_gravador} e \texttt{inicio\_gravador}.}
+\end{quadroCT}
+
+\begin{quadroCT}{17}{o nó reinicia}
+\linhaCT{Requisito verificado}{\RF{11} (teste mínimo da AP2)}
+\linhaCT{Objetivo}{Verificar que um reinício fica identificável e não gera duplicata nem perda falsa.}
+\linhaCT{Material}{Nó, gravador.}
+\linhaCT{Procedimento}{1. Com o gravador conectado, apertar EN e anotar a hora.\newline
+  2. Esperar o gravador reconectar e pelo menos 2 leituras.\newline
+  3. Rodar o \texttt{qualidade.py}.}
+\linhaCT{Resultado esperado}{Id do reinício novo, primeira sequência 1 e acumulado 0; \texttt{reinicios} \texttt{do} \texttt{no} aumenta em 1; nenhuma repetida e nenhuma perda atribuída ao reinício.}
+\linhaCT{Resultado obtido}{Ensaio com o nRF Connect (README): id muda, sequência volta a 1, acumulado recomeça de 0. Com o gravador (24/10, 15:25:36): \texttt{desconectado} em \SI{1.9}{\second}, \texttt{conectado} em \SI{5.6}{\second}, id novo \texttt{6d2e}; o \texttt{qualidade.py} contou o reinício, 0 repetidas e 0 perdas falsas. A primeira sequência recebida foi a 2 (acumulado 31\,lux$\cdot$min): a seq 1 saiu antes da reconexão e conta como perda real.}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{Saída do \texttt{qualidade.py}; teste automático \texttt{test\_contagens}, com um reinício sintético.}
+\end{quadroCT}
+
+\begin{quadroCT}{18}{o nó morre sem avisar}
+\linhaCT{Requisito verificado}{\RNF{08} (teste mínimo da AP2)}
+\linhaCT{Objetivo}{Medir quanto tempo o gravador leva para perceber que o nó caiu.}
+\linhaCT{Material}{Nó, gravador, relógio do computador do gravador.}
+\linhaCT{Procedimento}{1. Com o gravador conectado, arrancar o cabo USB do nó e anotar a hora (\texttt{date +\%T.\%N} no terminal).\newline
+  2. Ler a hora do \texttt{desconectado} no \texttt{eventos.csv}.\newline
+  3. Repetir 3 vezes.}
+\linhaCT{Resultado esperado}{\texttt{desconectado} em até \SI{10}{\second}.}
+\linhaCT{Resultado obtido}{Quatro arranques em 24/10: 15:20:22,7 $\rightarrow$ \SI{5.9}{\second}; 15:22:16,5 $\rightarrow$ \SI{3.6}{\second}; em 15:18:41 e 16:11:31 o Enter saiu atrasado (num deles, depois do próprio \texttt{desconectado}), e as medidas não valem. Reconexão sozinha nas quatro.}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{\caminho{ensaios/ct18-hora.txt} e \caminho{dados/eventos.csv}.}
+\end{quadroCT}
+
+\begin{quadroCT}{19}{antes do NTP: a hora das leituras}
+\linhaCT{Requisito verificado}{\DP{10} (teste mínimo da AP2)}
+\linhaCT{Objetivo}{Conferir de onde vem a hora das primeiras leituras depois de ligar o nó.}
+\linhaCT{Material}{Nó, gravador.}
+\linhaCT{Procedimento}{1. Ligar o nó com o gravador já rodando.\newline
+  2. Conferir as primeiras 3 linhas no \texttt{mensagens.csv}.}
+\linhaCT{Resultado esperado}{Nenhuma leitura com hora do nó (o pacote não tem esse campo); todas com \texttt{ts\_recebido} do gravador; a primeira chega pouco depois do \texttt{conectado}.}
+\linhaCT{Resultado obtido}{288 de 288 leituras sem hora do nó, todas com \texttt{ts\_recebido} do gravador; depois de cada um dos 5 reinícios, o primeiro pacote chegou de 0,1 a \SI{0.6}{\second} depois do \texttt{conectado}.}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{Primeiras linhas do \texttt{mensagens.csv}.}
+\end{quadroCT}
+
+\begin{quadroCT}{20}{luz através de uma desconexão}
+\linhaCT{Requisito verificado}{\RF{12}}
+\linhaCT{Objetivo}{Verificar que a luz de um período sem comunicação não se perde nem conta em dobro.}
+\linhaCT{Material}{nRF Connect; na campanha, o \texttt{mensagens\_limpo.csv}.}
+\linhaCT{Procedimento}{1. Desconectar o central por pelo menos \SI{30}{\minute}.\newline
+  2. Reconectar e comparar a diferença dos acumulados com a luz e o tempo entre os pacotes.}
+\linhaCT{Resultado esperado}{A diferença cobre o período inteiro.}
+\linhaCT{Resultado obtido}{Depois de cerca de \SI{55}{\minute} desconectado, o pacote seguinte trouxe a luz do período inteiro, e a diferença bateu com a luz e o tempo entre os pacotes (README).}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{README, \enquote{Estado da validação}; coluna \texttt{luz\_nova\_lux\_min} do arquivo limpo.}
+\end{quadroCT}
+
+\begin{quadroCT}{21}{alcance}
+\linhaCT{Requisito verificado}{\RNF{06}}
+\linhaCT{Objetivo}{Medir a distância máxima em que o enlace ainda funciona, dentro e fora da casa.}
+\linhaCT{Material}{Nó num carregador USB, a cerca de \SI{1}{\metre} do chão; central conectado.}
+\linhaCT{Procedimento}{1. Com o central conectado e o nó no quarto fechado, afastar o central aos poucos, pedindo leituras.\newline
+  2. Anotar a maior distância em que as leituras ainda chegam e quantas paredes há no caminho.\newline
+  3. Repetir com o nó no jardim aberto, fora da casa.}
+\linhaCT{Resultado esperado}{Pelo menos \SI{10}{\metre} dentro de casa, com paredes.}
+\linhaCT{Resultado obtido}{Cerca de 20 a \SI{25}{\metre} dentro da casa, com várias paredes; cerca de 45 a \SI{50}{\metre} no ambiente aberto, com uma parede.}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{Ensaio da equipe; distâncias aproximadas, sem registro em arquivo. Na campanha, o RSSI de cada conexão fica no \texttt{qualidade.py} (Apêndice~\ref{ap:campanha}).}
+\end{quadroCT}
+
+\begin{quadroCT}{22}{longa duração: a campanha}
+\linhaCT{Requisito verificado}{\RNF{05} e \RNF{07} (teste mínimo da AP2)}
+\linhaCT{Objetivo}{Verificar que o sistema roda sem ninguém olhando e forma um conjunto de dados completo.}
+\linhaCT{Material}{Nó instalado, gravador, \texttt{qualidade.py}.}
+\linhaCT{Procedimento}{1. Instalar o nó, iniciar o gravador e anotar no diário (Apêndice~\ref{ap:campanha}).\newline
+  2. Deixar correr pelo menos \SI{24}{\hour}, anotando os eventos.\newline
+  3. No fim, rodar o \texttt{qualidade.py} sobre o arquivo final, com \texttt{--inicio} e \texttt{--fim} declarados.}
+\linhaCT{Resultado esperado}{Pelo menos \SI{24}{\hour}; completude de pelo menos 90\,\%; campos ausentes até 5\,\%; toda lacuna explicada.}
+\linhaCT{Resultado obtido}{24,1\,h (24/10 14:07 a 25/10 14:13); completude de 97,6\,\% das janelas; 0 campos ausentes; 1 lacuna, de 35\,min\,39\,s, provocada pelo \CT{16}.}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{Seções~\ref{sec:campanha} e \ref{sec:qualidade}; Apêndice~\ref{ap:campanha}.}
+\end{quadroCT}
+
+\begin{quadroCT}{23}{tamanho do pacote}
+\linhaCT{Requisito verificado}{\RNF{09}}
+\linhaCT{Objetivo}{Confirmar que o pacote cabe numa notificação com o MTU padrão.}
+\linhaCT{Material}{\caminho{firmware/src/main.cpp}, nRF Connect.}
+\linhaCT{Procedimento}{1. Conferir \texttt{uint8\_t} \texttt{pacote[19]} em \texttt{enviarPacote()}.\newline
+  2. Ler a característica no nRF Connect sem negociar MTU.}
+\linhaCT{Resultado esperado}{Até \SI{20}{\byte}.}
+\linhaCT{Resultado obtido}{19 bytes no código e no nRF Connect.}
+\linhaCT{Veredito}{\aprovado}
+\linhaCT{Evidência}{Listagem do código; README.}
+\end{quadroCT}

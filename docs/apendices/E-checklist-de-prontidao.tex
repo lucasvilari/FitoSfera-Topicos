@@ -1,0 +1,64 @@
+% =====================================================================
+%  Apêndice E — Checklist de prontidão para a campanha (novo na AP2)
+% =====================================================================
+\chapter{Checklist de prontidão para a campanha}
+\label{ap:checklist}
+
+A equipe não localizou o checklist de prontidão de 06/10. A tabela abaixo
+foi montada a partir dos doze itens do modelo da disciplina, escritos para
+WiFi e MQTT: cada item traz o equivalente no BLE e a evidência no sistema
+de agora, e a coluna \enquote{Feito?} diz o estado antes da campanha. A
+última coluna é o que a campanha mostrou.
+
+\begin{table}[H]
+\centering
+\caption{Checklist de prontidão e o que a campanha mostrou}
+\label{tab:checklist}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}C{0.4cm}L{4.0cm}L{4.8cm}C{1.0cm}L{4.0cm}@{}}
+\toprule
+\textbf{\#} & \textbf{Item (equivalente no BLE)} & \textbf{Evidência} & \textbf{Feito?} & \textbf{Na campanha} \\
+\midrule
+1  & Laço sem \texttt{delay()} longo
+   & Listagem~\ref{lst:laco}; só \SI{100}{\milli\second} do BH1750 por ciclo & sim & nenhum travamento em 24,1\,h; \texttt{01} respondido em \SI{0.17}{\second} \\
+2  & Keepalive: \emph{timeout} de supervisão e vigia de silêncio
+   & \texttt{SILENCIO\_MAX\_S} = 630 em \texttt{gravador.py} & sim & \texttt{desconectado} em 3,6 e \SI{5.9}{\second} (\CT{18}); o vigia de \SI{630}{\second} não precisou disparar \\
+3  & \texttt{online}/\texttt{offline}: \texttt{conectado}/\texttt{desconectado} no \texttt{eventos.csv}
+   & \texttt{gravador.py}, \texttt{ao\_desconectar} & sim & 9 \texttt{conectado} e 6 \texttt{desconectado}, todos de ensaios \\
+4  & O gravador reconecta sozinho ao nó
+   & laço \texttt{rodar()}, espera de 2 a \SI{60}{\second} & sim & sozinho em todas as quedas (mediana \SI{20.1}{\second}); uma vez precisou de \texttt{bluetoothctl disconnect} \\
+5  & Contrato com \texttt{id}, \texttt{boot}, \texttt{seq}, \texttt{ts}: endereço, id do reinício, sequência e hora de chegada
+   & Tabela~\ref{tab:contrato-dados} & sim & 288 de 288 pacotes no contrato \\
+6  & Um reinício não gera duplicatas nem perdas falsas
+   & \texttt{qualidade.py}; teste automático com reinício sintético & sim & 5 reinícios, 0 repetidas, 0 perdas falsas; a seq 1 se perdeu em 4 \\
+7  & A hora sai certa; o que acontece sem NTP
+   & \DP{10}: hora do gravador em todas as leituras & sim & 288 de 288 com hora do gravador \\
+8  & O que o nó faz sem central: fila e o que se perde
+   & \DP{8}: sem fila; a luz atravessa, T e UR se perdem & não & como previsto: 7 leituras perdidas no \CT{16}, luz do intervalo inteira \\
+9  & Onde roda o gravador e o que acontece se ele parar
+   & Tabela~\ref{tab:pecas}; \CT{16} & sim & lacuna de 35\,min\,39\,s; na 1ª tentativa o gravador ignorou o Ctrl+C \\
+10 & Política de \emph{flush} e o que se aceita perder
+   & \texttt{fsync} a cada linha, antes da confirmação & sim & nenhuma linha truncada nas paradas do gravador \\
+11 & \texttt{secrets.h} fora do repositório
+   & não se aplica: o BLE não tem credencial & --- & --- \\
+12 & Teste de fumaça sem perdas, ou com as perdas explicadas
+   & \caminho{ensaios/fumaca.csv} e \caminho{ensaios/fumaca-eventos.csv}: conectado em \SI{1.2}{\second}, primeiro pacote \SI{0.5}{\second} depois, \SI{19}{\byte}, 0 fora do contrato & sim & o gravador funcionou de primeira com o nó \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe, a partir dos itens do modelo da disciplina, adaptados ao BLE.}
+\end{table}
+
+\section*{O que o checklist não pegou}
+\phantomsection
+\addcontentsline{toc}{section}{O que o checklist não pegou}
+
+Duas falhas do lado do computador, que nenhum item previa. A primeira:
+o gravador rodando em segundo plano num script ignorou o \texttt{kill
+-INT}, porque um processo de fundo de um script sem controle de tarefas
+nasce com o SIGINT ignorado; o \CT{16} automático não parou nada. A
+segunda: encerrado à força, o gravador deixou a conexão aberta no BlueZ,
+e o nó, ainda conectado, parou de anunciar. Os itens 4 e 9 perguntam se
+o gravador reconecta e o que acontece se ele para, mas não como ele é
+parado. As duas foram corrigidas na campanha (Capítulo~\ref{cap:testes},
+\enquote{O que falhou}).

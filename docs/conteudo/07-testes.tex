@@ -1,0 +1,162 @@
+% =====================================================================
+%  Capítulo 7 — Verificação e testes
+% =====================================================================
+\chapter{Verificação e testes}
+\label{cap:testes}
+\rubricaRobustez
+
+Cada requisito do Capítulo~\ref{cap:requisitos} tem um caso de teste. Os
+procedimentos passo a passo estão no Apêndice~\ref{ap:testes}. Os casos
+herdados da AP1 mantêm o número; os de LEDs (\CT{03}, \CT{04}, \CT{08} e
+\CT{09}) saíram junto com os LEDs. Há três fontes de evidência: os
+ensaios com o nRF Connect num celular Android, feitos antes da campanha e
+registrados no README; os testes automáticos do gravador
+(\texttt{python3} \texttt{-m} \texttt{unittest} \texttt{discover} \texttt{gravador}, 10 testes, todos
+passando); e o \texttt{mensagens.csv} e o \texttt{eventos.csv} da
+campanha, lidos pelo \texttt{qualidade.py}.
+
+\section{Casos de teste}
+\label{sec:testes-casos}
+
+\begin{table}[H]
+\centering
+\caption{Casos de teste e resultados}
+\label{tab:testes}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}L{1.1cm}L{1.3cm}L{4.4cm}L{4.6cm}L{1.9cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Requi\-sito} & \textbf{O que se verifica} & \textbf{Resultado obtido} & \textbf{Veredito} \\
+\midrule
+CT-01 & RF-01  & intervalo entre leituras do ciclo, na campanha & mediana \SI{300.2}{\second}; máximo \SI{2139}{\second}, na lacuna do \CT{16} & \aprovado \\
+CT-02 & RF-02  & leitura válida sob sol direto & 70\,619, 70\,682 e 70\,530 lux em 3 pedidos (24/10, 14h06), sem saturar & \aprovado \\
+CT-05 & RF-05  & 10 linhas CSV da serial com 7 campos & 11 de 11 linhas com 7 campos, depois do cabeçalho (\texttt{ct05.py}) & \aprovado \\
+CT-06 & RF-06  & fio do DHT11 solto e reconectado & 3 tentativas a cada \SI{5}{\second} e envio com campos ausentes; volta sozinho (nRF Connect) & \aprovado \\
+CT-07 & RNF-01 & corrente média na USB & não medida: a equipe não tem medidor USB; estimativa de \SI{46}{\milli\ampere} & \naoverificado \\
+CT-10 & RNF-04 & pinos contra a folha de dados & GPIO18, 21 e 22; nenhum restrito & \aprovado \\
+CT-12 & RF-07  & pacote no contrato & 3 de 3 exemplos do README decodificados (teste automático); pacotes de \SI{19}{\byte} no nRF Connect; teste de fumaça e ensaios com o gravador: 19 de 19 pacotes com \SI{19}{\byte}; na campanha, 0 fora do contrato em 288 & \aprovado \\
+CT-13 & RF-08  & medir agora e assinatura & assinatura: pacote em \SI{0.47}{\second}; 10 de 10 \texttt{01} com pacote novo e sequência seguinte, latência mediana \SI{0.17}{\second}, máxima \SI{0.22}{\second} (\texttt{ensaio.py}) & \aprovado \\
+CT-14 & RF-09  & confirmação zera o contador & sem confirmação, 114, 117 e \SI{121}{\second}; com \texttt{02} de sequência errada, \SI{124}{\second}; com a do pacote em espera, \SI{3}{\second} no pacote seguinte (\texttt{ensaio.py}) & \aprovado \\
+CT-15 & RF-10  & \textbf{queda do enlace} (Bluetooth do PC desligado \SI{2}{\minute}) & reconectou \SI{7.2}{\second} depois do \texttt{power on}; 1 leitura perdida, medida com o rádio desligado & \aprovado \\
+CT-16 & RF-10  & \textbf{o gravador para} por alguns minutos & \SI{35}{\minute} parado: lacuna de 35\,min\,39\,s, 7 leituras perdidas pela sequência; o primeiro pacote da volta trouxe a luz do intervalo & \parcial \\
+CT-17 & RF-11  & \textbf{o nó reinicia} (botão EN) & id novo; 1 reinício, 0 repetidas e 0 perdas falsas; a seq 1 saiu antes da reconexão e conta como perda real & \aprovado \\
+CT-18 & RNF-08 & \textbf{o nó morre sem avisar} (USB arrancado) & 3,6 e \SI{5.9}{\second} (2 medidas confiáveis de 4; nenhuma acima de \SI{10}{\second}) & \aprovado \\
+CT-19 & DP-10  & \textbf{antes do NTP}: hora das primeiras leituras & todas as leituras sem hora do nó; hora do gravador em todas (288 de 288); 1º pacote 0,1 a \SI{0.6}{\second} depois do \texttt{conectado} & \aprovado \\
+CT-20 & RF-12  & luz através de uma desconexão & depois de cerca de \SI{55}{\minute} fora, o primeiro pacote trouxe a luz do período inteiro (nRF Connect); com o gravador, \SI{16240}{lux\cdot\minute} em \SI{35.6}{\minute} parado (\CT{16}) & \aprovado \\
+CT-21 & RNF-06 & alcance máximo do enlace & 20 a \SI{25}{\metre} dentro de casa, com várias paredes; 45 a \SI{50}{\metre} com uma parede & \aprovado \\
+CT-22 & RNF-05, RNF-07 & \textbf{longa duração}: a campanha & 24,1\,h; completude 97,6\,\%; 0 campos ausentes; 1 lacuna, explicada & \aprovado \\
+CT-23 & RNF-09 & tamanho do pacote & \texttt{sizeof(pacote)} = 19; 19 bytes no nRF Connect e em cada notificação recebida pelo gravador, sem negociar MTU & \aprovado \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe. Em negrito, os testes mínimos da AP2.}
+\end{table}
+
+\section{Testes de robustez: os testes mínimos da AP2}
+
+Os seis testes mínimos da disciplina foram pensados para WiFi e MQTT.
+Abaixo, cada um com o equivalente no BLE e o que o resultado mostra.
+
+\begin{enumerate}[label=\alph*)]
+  \item \textbf{Queda do enlace} (\CT{15}; no WiFi, desligar o roteador).
+    Com o gravador conectado, desligar o Bluetooth do computador por
+    \SI{2}{\minute} (\texttt{bluetoothctl} \texttt{power} \texttt{off} e \texttt{power} \texttt{on}).
+    O esperado é o evento \texttt{desconectado}, buscas sem sucesso e,
+    depois de religar, \texttt{encontrado}, \texttt{conectado} e um pacote
+    extra imediato. A \enquote{fila local} não existe (\DP{8}): o que o nó
+    segura é a luz acumulada e a contagem de sequência. Resultado:
+    \texttt{desconectado} \SI{3}{\second} depois do \texttt{power off},
+    cinco tentativas com o adaptador desligado e, depois do
+    \texttt{power on}, \texttt{encontrado} em \SI{6.2}{\second},
+    \texttt{conectado} em \SI{7.2}{\second} e o pacote extra logo em
+    seguida. A sequência pulou de 22 para 24: o \texttt{power off} caiu
+    \SI{297}{\second} depois da última leitura, e o ciclo seguinte
+    aconteceu com o rádio desligado. O pacote da volta trouxe
+    \texttt{seg\_sem\_sucesso} = \SI{424}{\second}, coerente com a última
+    confirmação.
+  \item \textbf{O nó morre sem avisar} (\CT{18}). Arrancar o cabo USB com o
+    gravador conectado. O esperado é \texttt{desconectado} em poucos
+    segundos, pelo \emph{timeout} de supervisão. Resultado:
+    3,6 e \SI{5.9}{\second} nas duas medidas confiáveis; nas outras duas,
+    o Enter que marcava o arranque saiu atrasado (numa delas, depois do
+    próprio evento). O gravador reconectou sozinho nas quatro vezes.
+  \item \textbf{O nó reinicia} (\CT{17}). Apertar EN. O esperado é um id de
+    reinício novo, sequência 1 e acumulado 0, e o \texttt{qualidade.py}
+    contar um reinício, nenhuma repetida e nenhuma perda falsa (a regra é
+    que, depois de um reinício, só faltam as sequências anteriores à
+    primeira recebida). Resultado: id novo (\texttt{6d2e}),
+    \texttt{desconectado} \SI{1.9}{\second} e \texttt{conectado}
+    \SI{5.6}{\second} depois do EN; o \texttt{qualidade.py} contou o
+    reinício, nenhuma repetida e nenhuma perda falsa. A primeira sequência
+    recebida foi a 2, com acumulado de 31\,lux$\cdot$min: a seq 1, medida
+    \SI{2}{\second} depois de ligar, saiu antes de o gravador reconectar e
+    se perdeu de verdade. Aconteceu em 4 dos 5 reinícios da campanha.
+  \item \textbf{O gravador para} (\CT{16}). Parar o gravador com Ctrl+C por
+    35 minutos e rodar de novo. No MQTT, uma sessão persistente
+    faria o \emph{broker} guardar o atraso; no BLE não há quem guarde. O
+    esperado, por projeto, é uma lacuna no CSV, a sequência mostrando as
+    leituras que o nó fez sem ninguém ouvindo e o primeiro pacote da volta
+    trazendo a luz do intervalo. É um teste que \emph{falha} contra o
+    critério da disciplina (\enquote{sem buraco no CSV}), e a falha é a
+    consequência assumida na \DP{8}. Resultado: lacuna de
+    35\,min\,39\,s, com 7 leituras que o nó fez sem ninguém ouvindo (seq 4
+    a 10); o primeiro pacote da volta trouxe \SI{16240}{lux\cdot\minute}
+    novos em \SI{35.6}{\minute}, média de \SI{456}{lux}, coerente com os
+    569 e \SI{419}{lux} medidos antes e depois. A primeira tentativa, com
+    o gravador num script, falhou: o \texttt{kill -INT} foi ignorado
+    (ver \enquote{O que falhou}).
+  \item \textbf{Antes do NTP} (\CT{19}). O nó não tem NTP: nenhuma leitura
+    sai com hora do nó, nem antes nem depois de ligar. A equipe decidiu
+    que a hora é a de chegada no gravador (\DP{10}). O que se confere é que
+    a primeira leitura depois de ligar o nó chega cerca de \SI{2}{\second}
+    depois da conexão e tem hora do gravador como as outras. Resultado: nas 288
+    leituras, só a hora do gravador; depois de cada reinício, o primeiro
+    pacote chegou de 0,1 a \SI{0.6}{\second} depois do \texttt{conectado},
+    porque a assinatura dispara a medida.
+  \item \textbf{Longa duração} (\CT{22}). A própria campanha
+    (Seções~\ref{sec:campanha} e \ref{sec:qualidade}).
+\end{enumerate}
+
+\section{O que falhou}
+
+\begin{enumerate}
+  \item \textbf{Gravação a \SI{460800}{\baud} falhava} com o cabo e a porta
+    usados. A velocidade de gravação foi reduzida para \SI{115200}{\baud}
+    no \texttt{platformio.ini}.
+  \item \textbf{Um carregador rápido desligava o nó.} Com a carga baixa do
+    protótipo (cerca de \SI{46}{\milli\ampere}), um carregador rápido
+    religava a saída de tempos em tempos, e cada religamento era um
+    reinício. Foi trocado por um carregador USB comum de \SI{5}{\volt}. É
+    o tipo de falha que o id do reinício torna visível no conjunto de
+    dados.
+  \item \textbf{O nó não segura temperatura e umidade sem central.} Não é
+    defeito de código: é a consequência da \DP{8}, e o \CT{16} existe para
+    medi-la.
+  \item \textbf{Na campanha, o gravador ignorou o Ctrl+C.} Às 14:34 de
+    24/10, o \CT{16} automático mandou \texttt{kill -INT} ao gravador,
+    que rodava em segundo plano num script; num script sem controle de
+    tarefas, esses processos nascem com o SIGINT ignorado, e o gravador
+    seguiu gravando, sem lacuna. A equipe corrigiu o \texttt{gravador.py}
+    (SIGINT e SIGTERM encerram como o Ctrl+C) e refez o ensaio às 15:31.
+  \item \textbf{O BlueZ segurou a conexão de um gravador morto.} Na troca
+    do processo, às 15:11, o gravador antigo foi encerrado à força e o
+    BlueZ manteve a conexão aberta; o nó, ainda conectado, parou de
+    anunciar, e o gravador novo não o achava. Resolvido com
+    \texttt{bluetoothctl disconnect} (\SI{55}{\second} sem leitura, sem
+    perda). Com o encerramento correto, o problema não voltou.
+  \item \textbf{A primeira medida depois de ligar se perde.} O nó mede
+    \SI{2}{\second} depois de ligar, e o gravador leva de 5 a \SI{28}{\second}
+    para reconectar: a seq 1 se perdeu em 4 dos 5 reinícios. Guardar o
+    último pacote não confirmado e reenviá-lo na assinatura resolve.
+  \item \textbf{O sol aquece o DHT11.} Com o nó ao sol direto, a
+    temperatura subiu de 35,2 para \SI{43.0}{\celsius} em \SI{2}{\minute}
+    e chegou a \SI{44.4}{\celsius}: é o sensor aquecido, não o ar do quarto.
+    As leituras ao sol direto (até cerca de 14:55 de 24/10) precisam
+    dessa ressalva na rotulagem.
+\end{enumerate}
+
+As quatro falhas que a AP1 encontrou na revisão foram resolvidas na AP2:
+a luz numa entrada digital saiu com o BH1750 (\DP{2}); o período igual ao
+intervalo mínimo do DHT11 deixou de ser risco com \SI{300}{\second}
+(\DP{9}); o I\textsuperscript{2}C deixou de colidir com os LEDs porque os
+LEDs saíram (\DP{5}); e a falha do DHT11 deixou de descartar a luz
+(Seção~\ref{sec:falha}).

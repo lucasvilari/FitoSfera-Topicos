@@ -1,0 +1,20 @@
+2026-10-24 14:07:41.667420068 -03 inicio da campanha; no a 50 cm do chao, perto de janela aberta, com sol
+2026-10-24 14:07:41.671716832 -03 gravador iniciado (pid 8045)
+2026-10-24 14:17:41.679593517 -03 CT-15 bluetoothctl power off
+hci0 class of device changed: 0x000000
+hci0 new_settings: bondable ssp br/edr le secure-conn cis-central cis-peripheral 
+Changing power off succeeded
+2026-10-24 14:19:41.734187044 -03 CT-15 bluetoothctl power on
+hci0 class of device changed: 0x7c010c
+hci0 new_settings: powered bondable ssp br/edr le secure-conn cis-central cis-peripheral 
+[[0;93mCHG[0m] Controller C0:35:32:B6:90:44 Class: 0x007c010c (8126732)
+Changing power on succeeded
+2026-10-24 14:34:42.067475099 -03 CT-16 Ctrl+C no gravador
+2026-10-24 15:11:17.961365198 -03 CT-16 falhou: kill -INT das 14:34:42 ignorado (processo de fundo do bash nasce com SIGINT ignorado); gravador seguiu gravando, sem lacuna. campanha.sh encerrado; gravador pid 8045 segue; novo systemd-inhibit (pid 12511)
+2026-10-24 15:11:48.226841786 -03 gravador antigo (pid 8045) encerrado com TERM para trocar pela versão que trata SIGINT/SIGTERM; sem fim_gravador nesta parada
+2026-10-24 15:11:56.271555937 -03 gravador novo iniciado (pid 12614
+12619)
+2026-10-24 15:13:08.030644955 -03 BlueZ manteve a conexao do gravador antigo (no sem anunciar); bluetoothctl disconnect manual
+2026-10-24 15:31:15.688603105 -03 CT-16 kill -INT no gravador (pid 12619)
+2026-10-24 16:06:18.737243182 -03 CT-16 gravador de volta (35 min parado)
+2026-10-25 14:12:34.690204060 -03 fim da campanha: kill -INT no gravador (pid 16509)

@@ -1,0 +1,120 @@
+% =====================================================================
+%  config/pacotes.tex
+%  Pacotes e configuracao de aparencia. Voce nao precisa mexer aqui.
+% =====================================================================
+
+% --- Codificacao e fontes ---------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{csquotes}
+
+% --- Graficos, cores e caixas -----------------------------------------
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage[most]{tcolorbox}
+\usepackage{tikz}
+\usepackage{xurl}
+% Caminho de arquivo em fonte mono, que quebra nas barras e sem os < > que o abnTeX2 põe nas URLs
+\DeclareUrlCommand\caminho{\urlstyle{tt}\def\UrlLeft{}\def\UrlRight{}}
+\setlength{\emergencystretch}{2em}
+\usetikzlibrary{positioning,arrows.meta,fit,calc}
+
+% --- Tabelas ----------------------------------------------------------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{pdflscape}
+
+% --- Listas, unidades, matematica -------------------------------------
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{siunitx}
+\sisetup{
+  output-decimal-marker = {,},
+  group-separator       = {.},
+  group-minimum-digits  = 4,
+  per-mode              = symbol,
+  detect-weight         = true,
+}
+\DeclareSIUnit{\mAh}{mA\cdot h}
+\DeclareSIUnit{\Wh}{W\cdot h}
+\DeclareSIUnit{\HSP}{HSP}
+\DeclareSIUnit{\baud}{Bd}
+
+% --- Codigo-fonte -----------------------------------------------------
+\usepackage{listings}
+\definecolor{corComentario}{HTML}{4F7942}
+\definecolor{corPalavra}{HTML}{0B3D91}
+\definecolor{corTexto}{HTML}{8B1A1A}
+\definecolor{corFundo}{HTML}{F7F7F7}
+\definecolor{corRegua}{HTML}{BFBFBF}
+\definecolor{corDestaque}{HTML}{0B3D91}
+
+\lstset{
+  basicstyle        = \ttfamily\footnotesize,
+  keywordstyle      = \color{corPalavra}\bfseries,
+  commentstyle      = \color{corComentario}\itshape,
+  stringstyle       = \color{corTexto},
+  numbers           = left,
+  numberstyle       = \ttfamily\scriptsize\color{corRegua},
+  numbersep         = 8pt,
+  backgroundcolor   = \color{corFundo},
+  frame             = single,
+  rulecolor         = \color{corRegua},
+  breaklines        = true,
+  breakatwhitespace = true,
+  showstringspaces  = false,
+  tabsize           = 2,
+  captionpos        = b,
+  extendedchars     = true,
+  inputencoding     = utf8,
+  literate =
+    {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+    {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+    {à}{{\`a}}1 {À}{{\`A}}1
+    {â}{{\^a}}1 {ê}{{\^e}}1 {ô}{{\^o}}1
+    {Â}{{\^A}}1 {Ê}{{\^E}}1 {Ô}{{\^O}}1
+    {ã}{{\~a}}1 {õ}{{\~o}}1 {Ã}{{\~A}}1 {Õ}{{\~O}}1
+    {ç}{{\c c}}1 {Ç}{{\c C}}1
+    {°}{{\textdegree}}1 {º}{{\textordmasculine}}1 {ª}{{\textordfeminine}}1
+    {Ω}{{\ensuremath{\Omega}}}1 {µ}{{\ensuremath{\mu}}}1
+}
+
+% Linguagem para o firmware do ESP32 (C/C++ estilo Arduino)
+\lstdefinestyle{arduino}{
+  language  = C++,
+  morekeywords = {setup, loop, pinMode, digitalWrite, digitalRead,
+                  analogRead, analogWrite, delay, millis, micros,
+                  Serial, Wire, SPI, uint8_t, uint16_t, uint32_t,
+                  int8_t, int16_t, int32_t, esp_deep_sleep_start,
+                  esp_sleep_enable_timer_wakeup, RTC_DATA_ATTR,
+                  HIGH, LOW, INPUT, OUTPUT, INPUT_PULLUP, true, false},
+}
+\lstdefinestyle{terminal}{
+  language     = bash,
+  numbers      = none,
+  basicstyle   = \ttfamily\footnotesize,
+  keywordstyle = \color{corPalavra},
+}
+
+% --- Referencias cruzadas e links -------------------------------------
+\usepackage[brazilian,hyperpageref]{backref}
+\usepackage[alf]{abntex2cite}
+
+\renewcommand{\backrefpagesname}{Citado na(s) pagina(s):~}
+\renewcommand{\backref}{}
+\renewcommand*{\backrefalt}[4]{%
+  \ifcase #1 %
+    Nenhuma citacao no texto.%
+  \or
+    Citado na pagina #2.%
+  \else
+    Citado #1 vezes nas paginas #2.%
+  \fi}

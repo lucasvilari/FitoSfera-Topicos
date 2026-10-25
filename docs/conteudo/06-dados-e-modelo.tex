@@ -1,0 +1,82 @@
+% =====================================================================
+%  Capítulo 6 — Dados, modelo e inferência embarcada (só na AP3)
+% =====================================================================
+\chapter{Pipeline de dados, modelo e inferência embarcada}
+\label{cap:modelo}
+\rubricaFuncionalidade
+
+\begin{orientacao}
+Este capítulo só é compilado quando \texttt{\textbackslash def\textbackslash CICLO\{3\}}.
+Ele documenta o projeto integrador de AIoT: do dado bruto ao modelo
+rodando no dispositivo restrito.
+\end{orientacao}
+
+\section{Pipeline de dados}
+
+\begin{orientacao}
+Sincronização, rotulagem, janelamento e extração de características.
+Diga o tamanho da janela e a sobreposição, e justifique ambos pelo
+fenômeno que está sendo classificado --- não pelo que era o padrão da
+ferramenta.
+\end{orientacao}
+
+\section{Modelo e treinamento}
+
+\begin{orientacao}
+Arquitetura, divisão treino/validação/teste (com a regra de separação:
+por tempo? por indivíduo? aleatória? a escolha muda tudo), métricas e
+matriz de confusão. Acurácia sozinha não descreve um classificador
+desbalanceado.
+\end{orientacao}
+
+\begin{table}[H]
+\centering
+\caption{Desempenho do modelo por classe}
+\label{tab:metricas}
+\footnotesize
+\begin{tabular}{@{}L{4.0cm}R{2.6cm}R{2.6cm}R{2.6cm}R{2.0cm}@{}}
+\toprule
+\textbf{Classe} & \textbf{Precisão} & \textbf{Revocação} & \textbf{F1} & \textbf{Amostras} \\
+\midrule
+\ldots & 0,00 & 0,00 & 0,00 & 0 \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+\section{Otimização para o dispositivo restrito}
+
+\begin{orientacao}
+Quantização, \emph{pruning} ou destilação: o que foi aplicado, e quanto
+custou em acurácia. A tabela abaixo é o coração da \rotuloAP\ ---
+ela mostra o preço de cada grama de memória economizada
+\cite{warden2019}.
+\end{orientacao}
+
+\begin{table}[H]
+\centering
+\caption{Custo da otimização: antes e depois}
+\label{tab:otimizacao}
+\footnotesize
+\begin{tabular}{@{}L{4.2cm}R{2.8cm}R{2.8cm}R{3.2cm}@{}}
+\toprule
+\textbf{Métrica} & \textbf{Modelo original} & \textbf{Modelo embarcado} & \textbf{Variação} \\
+\midrule
+Acurácia & 0,00 & 0,00 & --- \\
+Tamanho em \emph{flash} (kB) & 0 & 0 & --- \\
+RAM de pico (kB) & 0 & 0 & --- \\
+Latência de inferência (ms) & --- & 0 & --- \\
+Energia por inferência (mJ) & --- & 0 & --- \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+\section{Inferência no dispositivo}
+
+\begin{orientacao}
+Como o modelo foi embarcado, quanto ele ocupa, quanto tempo leva uma
+inferência medida no próprio ESP32 e o que o sistema faz com o
+resultado. Fechem o ciclo: a decisão de atuação da \rotuloAP\ 1 agora é
+tomada pelo modelo?
+\end{orientacao}

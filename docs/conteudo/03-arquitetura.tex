@@ -1,0 +1,317 @@
+% =====================================================================
+%  Capítulo 3 — Arquitetura do sistema
+% =====================================================================
+\chapter{Arquitetura do sistema}
+\label{cap:arquitetura}
+\rubricaJustificativa
+
+\section{Visão em camadas}
+
+A Figura~\ref{fig:arquitetura} situa o sistema da AP2 nas quatro camadas
+de uma arquitetura IoT \cite{alfuqaha2015}. A camada de rede, que na AP1
+era o cabo USB, agora é um enlace BLE entre o nó e um central.
+
+\begin{itemize}
+  \item \textbf{Percepção:} DHT11 (temperatura e umidade do ar) e BH1750
+    (luz em lux, por I\textsuperscript{2}C). Os LEDs de aviso e o módulo
+    fotorresistor saíram.
+  \item \textbf{Processamento na borda:} o ESP32 mede, tenta de novo
+    quando um sensor falha, integra a luz no tempo e monta o pacote de
+    \SI{19}{\byte}. Ele não decide mais nada sobre a planta: a comparação
+    com a espécie passou para o aplicativo (\DP{3}).
+  \item \textbf{Rede:} BLE. O nó é periférico GATT; o central assina a
+    notificação, recebe um pacote a cada \SI{300}{\second} e confirma
+    cada um. Não há roteador, \emph{broker} nem internet entre o nó e
+    quem guarda o dado.
+  \item \textbf{Aplicação:} na campanha, o gravador em Python, que grava
+    o CSV, e o \texttt{qualidade.py}, que o analisa. No produto, o
+    aplicativo FitoSfera no celular, seguindo o mesmo contrato.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\sffamily\scriptsize,
+  caixa/.style={draw, rounded corners=2pt, align=center, minimum height=0.9cm, inner sep=3pt, fill=white},
+  futuro/.style={caixa, dashed},
+  camada/.style={font=\sffamily\scriptsize\bfseries, anchor=west, align=left},
+  seta/.style={-{Stealth[length=2mm]}, thick},
+]
+  \foreach \y/\nome in {0/Percepção, 1.6/Processamento\\(borda), 3.2/Rede, 4.8/Aplicação}{
+    \fill[gray!8] (-0.2,\y-0.65) rectangle (13.6,\y+0.65);
+    \node[camada] at (-0.1,\y) {\nome};
+  }
+  \node[caixa, text width=2.4cm] (dht) at (3.6,0) {DHT11\\T e UR, GPIO18};
+  \node[caixa, text width=2.6cm] (bh)  at (6.8,0) {BH1750 (0x23)\\luz, I\textsuperscript{2}C 21/22};
+  \node[caixa, text width=4.6cm] (esp) at (5.2,1.6) {ESP32 DevKit V1 a \SI{80}{\mega\hertz}\\mede, integra a luz, monta 19 bytes};
+  \node[caixa, text width=4.6cm] (ble) at (5.2,3.2) {BLE: notificação a cada \SI{300}{\second}\\confirmação \texttt{[0x02,} \texttt{seq]}};
+  \node[caixa, text width=3.0cm] (grav) at (3.2,4.8) {gravador.py (PC)\\\texttt{mensagens.csv}};
+  \node[caixa, text width=2.2cm] (qual) at (7.0,4.8) {qualidade.py};
+  \node[futuro, text width=2.8cm] (app) at (11.6,4.8) {aplicativo FitoSfera\\no celular (AP3)};
+  \node[futuro, text width=2.8cm] (ser) at (11.6,1.6) {serial USB\\CSV de depuração};
+  \draw[seta] (dht) -- (esp);
+  \draw[seta] (bh) -- (esp);
+  \draw[seta] (esp) -- (ble);
+  \draw[seta] (ble) -- (grav);
+  \draw[seta] (grav) -- (qual);
+  \draw[seta, dashed] (ble.east) -| (app.south);
+  \draw[seta, dashed] (esp) -- (ser);
+\end{tikzpicture}
+\caption{Arquitetura do FitoSfera na AP2: o que rodou na campanha (contínuo) e o que fica para depois ou só serve à depuração (tracejado)}
+\label{fig:arquitetura}
+\fonte{Elaborada pela equipe.}
+\end{figure}
+
+\section{Componentes e decisões de projeto}
+\label{sec:componentes}
+
+As caixas \DP{1} a \DP{5} vêm da AP1 e foram atualizadas para o sistema
+de agora. As caixas \DP{6} a \DP{10} são do \moduloDoCiclo: o que mudou
+na arquitetura por causa do enlace. A escolha da tecnologia em si está
+na \DP{11}, no Capítulo~\ref{cap:conectividade}.
+
+\begin{decisao}{Sensor de temperatura e umidade do ar (mantida)}
+\alternativas{DHT11, DHT22 e BME280 (I\textsuperscript{2}C).}
+\criterio{Estar disponível para a equipe, custo e resolução suficiente
+  para perceber tendências num ambiente que muda em escala de horas.}
+\escolha{DHT11, como na AP1.}
+\evidencia{Resolução de \SI{1}{\celsius} e 1\,\% UR e incerteza de
+  $\pm$\SI{2}{\celsius} \cite{aosongdht11} (\folhadedados). Com uma
+  leitura a cada \SI{300}{\second}, o intervalo mínimo de \SI{2}{\second}
+  da biblioteca, que na AP1 coincidia com o período (falha 2 da
+  Seção~5.3 da AP1), deixou de ser um risco.}
+\consequencia{A leitura continua ocupando cerca de \SI{25}{\milli\second}
+  (Apêndice~\ref{ap:barramento}). O BME280 é a troca prevista: entra no
+  mesmo barramento I\textsuperscript{2}C do BH1750, sem pino novo.}
+\end{decisao}
+
+\begin{decisao}{Canal de luz: BH1750 em I\textsuperscript{2}C}
+\alternativas{(a) manter o fotorresistor numa entrada digital, como na
+  AP1; (b) ler o fotorresistor pelo ADC1 (GPIO32 ou GPIO33);
+  (c) sensor de luz calibrado em I\textsuperscript{2}C (BH1750).}
+\criterio{O aplicativo precisa saber \emph{quanta} luz a planta recebeu
+  num dia, e não se o ambiente está claro ou escuro; o limiar tem de ser
+  de software.}
+\escolha{(c), BH1750 (módulo GY-302) no endereço \texttt{0x23}, no modo
+  de uma medida, com MTreg = 31.}
+\evidencia{A AP1 mostrou que (a) lê uma tensão contínua numa entrada
+  digital, numa faixa de \SI{1.65}{\volt} sem garantia da folha de dados.
+  (b) daria um número, mas não em lux: o fotorresistor não tem curva
+  conhecida e o ADC do ESP32 é pouco linear nos extremos. O BH1750 entrega
+  lux diretamente, com incerteza de $\pm$20\,\% \cite{rohmbh1750}
+  (\folhadedados). Na sensibilidade de fábrica (MTreg = 69) ele satura
+  perto de \SI{54612}{lux}; com MTreg = 31 o teto sobe para cerca de
+  \SI{121557}{lux} ($54612 \times 69/31$), o que cobre sol pleno.}
+\consequencia{Cada medida espera cerca de \SI{100}{\milli\second} de
+  conversão com \texttt{delay()}, aceito porque acontece uma vez a cada
+  \SI{300}{\second}. A resolução em luz fraca cai na mesma proporção
+  ($69/31 \approx 2{,}2$ vezes).}
+\end{decisao}
+
+\begin{decisao}{Onde fica a decisão sobre a planta}
+\alternativas{(a) comparador no hardware; (b) limiares no
+  \emph{firmware}, com LEDs no nó (a escolha da AP1); (c) nó que só mede,
+  com a decisão no aplicativo.}
+\criterio{O limiar tem de ser o da espécie cadastrada, diferente para
+  cada planta, e tem de poder mudar sem regravar o nó.}
+\escolha{(c). Na AP2 os três LEDs e as constantes \texttt{TEMP\_ALTA} e
+  \texttt{UMID\_BAIXA} saíram do \emph{firmware}.}
+\evidencia{Na AP1 a equipe já tinha declarado que os LEDs eram de
+  demonstração e que o limiar fixo na compilação valia para o jardim
+  inteiro. Com o BLE, o aplicativo recebe as leituras e conhece a
+  espécie; mandar os limiares de volta para o nó só serviria para acender
+  um LED que ninguém olha.}
+\consequencia{Sem central, não há aviso nenhum. É o preço de (c), e é
+  aceitável porque a planta muda em horas e o celular volta a conectar
+  quando o usuário chega perto do jardim. Na AP3, com a IA embarcada,
+  a decisão pode voltar em parte para o nó (Seção~\ref{sec:proximo-ciclo}).}
+\end{decisao}
+
+\begin{decisao}{Temporização sem bloqueio (atualizada)}
+\alternativas{\texttt{delay(300000)} no fim do \texttt{loop()}, ou
+  comparação com \texttt{millis()}.}
+\criterio{O laço tem de atender, a qualquer momento, a assinatura da
+  notificação, o comando de medir agora e a confirmação do central.}
+\escolha{Comparação com \texttt{millis()} contra um instante
+  \texttt{proximaLeitura} (Listagem~\ref{lst:laco}). Um pedido do central
+  fura a fila e mede na hora.}
+\evidencia{Com \texttt{delay()}, um pedido do central esperaria até
+  \SI{300}{\second}; com a comparação, a resposta sai no próximo giro do
+  laço, e \RF{08} pede no máximo \SI{2}{\second}. Os retornos do BLE
+  chegam por \emph{callbacks} do NimBLE, que só ligam uma bandeira; o
+  trabalho é feito no \texttt{loop()}.}
+\consequencia{A única espera bloqueante que sobrou são os
+  \SI{100}{\milli\second} da conversão do BH1750 (\DP{2}), uma vez por
+  ciclo.}
+\end{decisao}
+
+\begin{decisao}{Escolha dos pinos (atualizada)}
+\alternativas{Qualquer GPIO de uso geral da placa.}
+\criterio{Evitar os pinos que a folha de dados proíbe ou desaconselha
+  \cite{espressif2023}: GPIO6 a 11 (\emph{flash}), GPIO0, 2, 5, 12 e 15
+  (inicialização), GPIO1 e 3 (UART0) e GPIO34 a 39 (só entrada).}
+\escolha{GPIO18 (DHT11) e GPIO21/22 (SDA/SCL do BH1750).}
+\evidencia{O conflito previsto na AP1 era o I\textsuperscript{2}C padrão
+  cair em cima dos LEDs vermelho e amarelo. Com a saída dos LEDs, o par
+  21/22 ficou livre e o barramento usa os pinos padrão, sem
+  \texttt{Wire.begin()} em pinos alternativos (\CT{10}).}
+\consequencia{Três pinos usados, nenhum restrito. Qualquer sensor
+  I\textsuperscript{2}C novo entra no mesmo par, desde que o endereço seja
+  diferente de \texttt{0x23}.}
+\end{decisao}
+
+\begin{decisao}{O que conta como entregue: confirmação da aplicação}
+\alternativas{(a) considerar entregue quando \texttt{notify()} volta;
+  (b) usar indicação em vez de notificação, que a pilha BLE confirma;
+  (c) notificação mais uma confirmação escrita pela aplicação,
+  \texttt{[0x02,} \texttt{seq]}.}
+\criterio{\enquote{Entregue} tem de significar \enquote{gravado por quem
+  guarda o dado}, e não \enquote{saiu pelo rádio}.}
+\escolha{(c). O nó guarda a sequência do pacote em espera e só zera o
+  contador de segundos sem sucesso quando chega a confirmação dessa
+  sequência. O gravador grava a linha com \texttt{fsync} e só depois
+  confirma (Listagem~\ref{lst:gravador}).}
+\evidencia{Uma notificação não tem confirmação no protocolo: a volta de
+  \texttt{notify()} só prova que o pacote foi para a fila do rádio. Uma
+  indicação é confirmada pela pilha do central, não pelo aplicativo, que
+  pode cair depois de receber e antes de gravar. No ensaio com o nRF
+  Connect, sem a escrita de \texttt{02} \texttt{NN}, o contador continuou
+  crescendo de pacote em pacote (\CT{14}).}
+\consequencia{O campo \texttt{seg\_sem\_sucesso} de cada pacote diz há
+  quanto tempo o nó não tem prova de entrega. Perto de \SI{300}{\second},
+  tudo certo; muito acima, a confirmação anterior se perdeu ou houve
+  lacuna. O \texttt{qualidade.py} conta esses casos.}
+\end{decisao}
+
+\begin{decisao}{Formato do pacote: binário de 19 bytes}
+\alternativas{(a) JSON em texto, como o contrato de dados da disciplina;
+  (b) estrutura binária fixa, \emph{little-endian}.}
+\criterio{Caber numa única notificação sem depender de negociar o MTU,
+  e ser decodificável sem ambiguidade por um aplicativo em TypeScript.}
+\escolha{(b), 19 bytes (Tabela~\ref{tab:contrato-dados}).}
+\evidencia{Com o MTU padrão do ATT, de \SI{23}{\byte}, cabem
+  \SI{20}{\byte} de dados numa notificação. O JSON equivalente, com as
+  mesmas oito grandezas e sem espaços, tem \SI{122}{\byte}: exigiria
+  negociar um MTU maior, o que nem todo celular faz, ou fragmentar a
+  mensagem. Os três pacotes de exemplo do README foram decodificados pelo
+  decodificador em TypeScript e pelo \texttt{protocolo.py} sem divergência
+  (\CT{12}).}
+\consequencia{O pacote não se descreve sozinho: quem recebe precisa do
+  contrato. Uma mudança de campo exige versão nova do contrato (hoje,
+  versão 2) e atualização do decodificador nos dois lados.}
+\end{decisao}
+
+\begin{decisao}{O que o nó guarda enquanto ninguém escuta}
+\alternativas{(a) nada; (b) uma fila circular de leituras na RAM,
+  entregue quando o central volta; (c) só a luz, como integral
+  acumulada desde que o nó ligou.}
+\criterio{A grandeza que o aplicativo soma ao longo do dia (luz) não
+  pode ter buraco; as que ele só compara com um limiar (temperatura e
+  umidade) toleram.}
+\escolha{(c). A cada medida, o nó soma a área do trapézio entre a leitura
+  atual e a anterior; intervalos de mais de \SI{15}{\minute} sem leitura
+  de luz não entram na soma.}
+\evidencia{Num ensaio com o nRF Connect, depois de cerca de
+  \SI{55}{\minute} desconectado, o primeiro pacote trouxe de uma vez a
+  luz do período inteiro (\CT{20}). Como o aplicativo soma diferenças
+  entre acumulados, um pacote repetido não conta luz em dobro e um
+  perdido não deixa buraco. Uma fila de um dia (288 leituras $\times$
+  \SI{19}{\byte} $\approx$ \SI{5.5}{\kilo\byte}) caberia na RAM, mas
+  exigiria um protocolo de entrega em lote que a equipe não implementou
+  neste ciclo.}
+\consequencia{Temperatura e umidade medidas sem central se perdem. A
+  sequência continua contando, então o conjunto de dados mostra quantas
+  leituras faltaram, mas não os valores. É por isso que, na campanha, o
+  gravador precisa ficar ligado o tempo todo (Seção~\ref{sec:caminho}).}
+\end{decisao}
+
+\begin{decisao}{Período de amostragem: \SI{300}{\second}}
+\alternativas{\SI{2}{\second} (AP1), \SI{60}{\second} e \SI{300}{\second}.}
+\criterio{Ser bem mais rápido que a resposta da planta, que é de horas,
+  sem gastar rádio e sem inflar o conjunto de dados.}
+\escolha{\SI{300}{\second} (\texttt{INTERVALO\_MS}), com leitura extra a
+  pedido do central.}
+\evidencia{São 288 leituras e $288 \times \SI{19}{\byte} =
+  \SI{5472}{\byte}$ por dia, doze amostras por hora. A \SI{2}{\second}
+  seriam 43.200 notificações por dia, sem informação nova sobre a planta.}
+\consequencia{A luz é amostrada a cada \SI{5}{\minute}, o que torna a
+  integral grosseira em dias de nuvens passando. Um evento mais curto que
+  \SI{5}{\minute} (uma sombra passageira) pode não aparecer no conjunto
+  de dados.}
+\end{decisao}
+
+\begin{decisao}{Quem dá a hora da leitura}
+\alternativas{(a) NTP no nó, o que exige WiFi; (b) relógio de tempo real
+  externo; (c) o central carimba a hora na chegada.}
+\criterio{Toda leitura do conjunto de dados precisa de hora real, para
+  que a série tenha ciclo diário e para rotular eventos.}
+\escolha{(c). O gravador grava \texttt{ts\_recebido} com o relógio do
+  computador, sincronizado pelo sistema operacional; o aplicativo fará o
+  mesmo com o relógio do celular.}
+\evidencia{Com BLE não há rede no nó, então (a) não se aplica; (b) custaria
+  um módulo e uma bateria para corrigir um erro que, com notificação, é do
+  tamanho do intervalo de conexão (dezenas de milissegundos). O nó mede e
+  notifica no mesmo giro do laço.}
+\consequencia{Nenhuma leitura sai com hora do nó: o equivalente a
+  \enquote{\texttt{ts} \texttt{null}} da disciplina vale para 100\,\% dos
+  pacotes, e é tratado como decisão, não como falha (\CT{19}). Uma leitura
+  feita por \texttt{READ}, sem notificação, pode ter até \SI{300}{\second}
+  de idade; o gravador não usa \texttt{READ}.}
+\end{decisao}
+
+\section{Mapa de barramento}
+\label{sec:barramento}
+
+O nó tem dois sensores e o enlace. O DHT11 continua no barramento de um
+fio próprio, no GPIO18, e é o dispositivo mais lento, com cerca de
+\SI{25}{\milli\second} por leitura. O BH1750 está sozinho no
+I\textsuperscript{2}C, no endereço \texttt{0x23} (pino ADDR solto), nos
+pinos padrão 21/22, que a saída dos LEDs liberou (\DP{5}). Na
+inicialização o \emph{firmware} varre o barramento e lista os endereços
+na serial; se o \texttt{0x23} não responde, o nó avisa e segue sem luz.
+O mapa completo está no Apêndice~\ref{ap:barramento}.
+
+\section{Orçamento de energia}
+\label{sec:energia}
+
+O nó continua sempre ligado, num carregador USB de \SI{5}{\volt}, agora
+com o BLE anunciando ou conectado o tempo todo e a CPU a
+\SI{80}{\mega\hertz}, o mínimo com BLE. Sem os LEDs, o consumo estimado
+cai de \SI{66}{\milli\ampere} (AP1) para cerca de
+\SI{46}{\milli\ampere} em média, ou cerca de
+\SI{1114}{\milli\ampere\hour} por dia. Quem domina é o ESP32 acordado com
+o rádio, que responde por cerca de 97\,\% da conta; os sensores ficam
+abaixo de 2\,\%. A linha do rádio e a corrente total estão detalhadas no
+Apêndice~\ref{ap:energia} e na Seção~\ref{sec:custo-radio}. A equipe não
+tem medidor USB, então esses números continuam sendo estimativa.
+
+\section{Lista de materiais}
+\label{sec:bom}
+
+\begin{table}[H]
+\centering
+\caption{Lista de materiais do protótipo}
+\label{tab:bom}
+\footnotesize
+\begin{tabular}{@{}L{6.0cm}C{1.2cm}R{2.2cm}R{2.2cm}L{2.2cm}@{}}
+\toprule
+\textbf{Item} & \textbf{Qtd.} & \textbf{Unitário (R\$)} & \textbf{Total (R\$)} & \textbf{Origem} \\
+\midrule
+Kit eletrônica iniciante ESP32 & 1 & 180,00 & 180,00 & Mercado Livre \\
+\multicolumn{5}{@{}l}{\emph{Itens do kit usados no protótipo:}} \\
+\quad Placa ESP32 DevKit V1 (ESP32-WROOM-32) & 1 & --- & --- & kit \\
+\quad Módulo DHT11 (3 pinos, \emph{pull-up} na placa) & 1 & --- & --- & kit \\
+\quad Protoboard e fios macho-macho (9 em uso) & 1 & --- & --- & kit \\
+\quad Cabo USB & 1 & --- & --- & kit \\
+Módulo BH1750 (GY-302) & 1 & 21,04 & 21,04 & Mercado Livre \\
+Carregador USB \SI{5}{\volt}, \SI{1}{\ampere} ou mais & 1 & --- & --- & da equipe \\
+\midrule
+\multicolumn{3}{@{}r}{\textbf{Total}} & \textbf{201,04} & \\
+\bottomrule
+\end{tabular}
+\fonte{Elaborada pela equipe.}
+\end{table}
+
+Saíram do protótipo da AP1 os três LEDs, os três resistores de
+\SI{220}{\ohm} e o módulo fotorresistor. O gravador roda num notebook Acer Aspire A515-57
+que a equipe já tinha (Linux Mint 22.3, Python 3.12.3), com Bluetooth.

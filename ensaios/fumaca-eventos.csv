@@ -1,0 +1,6 @@
+ts,hora_utc,evento,detalhe
+1792861470.164,2026-10-24T17:04:30.163+00:00,inicio_gravador,procurando 'FitoSfera'
+1792861470.849,2026-10-24T17:04:30.848+00:00,encontrado,8C:94:DF:8F:FA:16 rssi=-61 dBm
+1792861472.079,2026-10-24T17:04:32.079+00:00,conectado,8C:94:DF:8F:FA:16
+1792861472.457,2026-10-24T17:04:32.456+00:00,inscrito,a assinatura faz o nó medir e enviar na hora
+1792861531.993,2026-10-24T17:05:31.992+00:00,fim_gravador,1 pacotes nesta execução

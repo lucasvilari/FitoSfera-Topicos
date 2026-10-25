@@ -1,0 +1,146 @@
+% =====================================================================
+%  config/comandos.tex
+%  Chaves do ciclo, caixas de apoio e macros do relatório.
+%  A equipe não precisa mexer aqui.
+% =====================================================================
+
+% ---------------------------------------------------------------------
+%  1. CICLO DE PROJETO (AP1, AP2 ou AP3)
+% ---------------------------------------------------------------------
+\ifdefined\CICLO\else\def\CICLO{1}\fi
+\newcounter{ciclo}
+\setcounter{ciclo}{\CICLO}
+
+% \seAP{n}{texto}     -> aparece somente no ciclo n
+% \aPartirDaAP{n}{t}  -> aparece do ciclo n em diante
+\newcommand{\seAP}[2]{\ifnum\value{ciclo}=#1\relax#2\fi}
+\newcommand{\aPartirDaAP}[2]{\ifnum\value{ciclo}<#1\relax\else#2\fi}
+
+\newcommand{\nomeciclo}{%
+  \ifcase\value{ciclo}\or
+    Ciclo de Projeto 1 --- sistema embarcado de sensoriamento e atuação\or
+    Ciclo de Projeto 2 --- integração à infraestrutura de comunicação e
+      formação do conjunto de dados\or
+    Ciclo de Projeto 3 --- projeto integrador de AIoT\fi}
+
+\newcommand{\rotuloAP}{AP\arabic{ciclo}}
+
+\newcommand{\moduloDoCiclo}{%
+  \ifcase\value{ciclo}\or Módulo 1\or Módulo 2\or Módulo 3\fi}
+
+% ---------------------------------------------------------------------
+%  2. NOTAS AO AUTOR (instruções que somem na versão final)
+% ---------------------------------------------------------------------
+\newif\ifmostrarnotas
+\ifdefined\MOSTRARNOTAS\mostrarnotastrue\else\mostrarnotasfalse\fi
+
+\newtcolorbox{tcbnota}{
+  enhanced, breakable,
+  colback   = gray!6,
+  colframe  = gray!45,
+  boxrule   = 0.4pt,
+  left      = 6pt, right = 6pt, top = 5pt, bottom = 5pt,
+  fontupper = \small\sffamily,
+  borderline west = {2pt}{0pt}{gray!55},
+  sharp corners,
+  before skip = 8pt, after skip = 8pt,
+}
+
+\usepackage{comment}
+\ifmostrarnotas
+  \newenvironment{orientacao}{\begin{tcbnota}\noindent\textbf{Como preencher.}\ }%
+                       {\end{tcbnota}}
+  \newenvironment{exemploguia}{\begin{tcbnota}\noindent\textbf{Exemplo.}\ }%
+                          {\end{tcbnota}}
+\else
+  \excludecomment{orientacao}
+  \excludecomment{exemploguia}
+\fi
+
+% ---------------------------------------------------------------------
+%  3. DECISÃO DE PROJETO
+%     Vale 25% da nota da AP. Uma caixa por decisão que a equipe tomou.
+% ---------------------------------------------------------------------
+\newcounter{decisao}
+\renewcommand{\thedecisao}{DP-\arabic{decisao}}
+
+\newtcolorbox[use counter=decisao]{caixadecisao}[1]{
+  enhanced, breakable,
+  colback    = corDestaque!4,
+  colframe   = corDestaque!70,
+  boxrule    = 0.6pt,
+  left       = 7pt, right = 7pt, top = 6pt, bottom = 6pt,
+  sharp corners,
+  fonttitle  = \bfseries\sffamily\small,
+  title      = {DP-\thetcbcounter\ --- #1},
+  before skip = 10pt, after skip = 10pt,
+}
+
+\newenvironment{decisao}[1]{\begin{caixadecisao}{#1}\small}{\end{caixadecisao}}
+
+\newcommand{\campoDecisao}[2]{\par\smallskip\noindent\textbf{#1}\ #2}
+\newcommand{\alternativas}[1]{\campoDecisao{Alternativas consideradas.}{#1}}
+\newcommand{\criterio}[1]{\campoDecisao{Critério de escolha.}{#1}}
+\newcommand{\escolha}[1]{\campoDecisao{Decisão.}{#1}}
+\newcommand{\evidencia}[1]{\campoDecisao{Evidência (número e procedência).}{#1}}
+\newcommand{\consequencia}[1]{\campoDecisao{Consequência assumida.}{#1}}
+
+% ---------------------------------------------------------------------
+%  4. IDENTIFICADORES E VEREDITOS
+% ---------------------------------------------------------------------
+\newcommand{\RF}[1]{\mbox{\textbf{RF-#1}}}      % requisito funcional
+\newcommand{\RNF}[1]{\mbox{\textbf{RNF-#1}}}    % requisito não funcional
+\newcommand{\CT}[1]{\mbox{\textbf{CT-#1}}}      % caso de teste
+\newcommand{\DP}[1]{\mbox{\textbf{DP-#1}}}      % decisão de projeto
+
+\definecolor{corAprovado}{HTML}{1B6B3A}
+\definecolor{corReprovado}{HTML}{9B1C1C}
+\definecolor{corParcial}{HTML}{8A6100}
+\newcommand{\aprovado}{\textcolor{corAprovado}{\textbf{atende}}}
+\newcommand{\reprovado}{\textcolor{corReprovado}{\textbf{não atende}}}
+\newcommand{\naoverificado}{\textcolor{gray!70!black}{\textbf{não verificado}}}
+\newcommand{\parcial}{\textcolor{corParcial}{\textbf{atende em parte}}}
+
+% ---------------------------------------------------------------------
+%  5. ETIQUETA DA RUBRICA
+%     Marca discretamente a que fatia da nota a seção responde.
+% ---------------------------------------------------------------------
+\newcommand{\rubricaTag}[2]{%
+  \par\vspace{-6pt}\noindent
+  {\footnotesize\sffamily\color{gray!75}%
+   Rubrica da \rotuloAP: #1 --- #2\,\%}%
+  \par\vspace{4pt}}
+
+\newcommand{\rubricaFuncionalidade}{\rubricaTag{funcionalidade do protótipo}{30}}
+\newcommand{\rubricaJustificativa}{\rubricaTag{justificativa técnica das decisões}{25}}
+\newcommand{\rubricaRobustez}{\rubricaTag{robustez, testes e documentação}{25}}
+\newcommand{\rubricaComunicacao}{\rubricaTag{comunicação dos resultados}{20}}
+
+% ---------------------------------------------------------------------
+%  6. ATALHOS DE TABELA
+% ---------------------------------------------------------------------
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+\newcommand{\cabecalholinha}{\rowcolor{gray!12}}
+\renewcommand{\arraystretch}{1.25}
+
+% Procedência de um número: folha de dados, bancada ou estimativa.
+\newcommand{\estimativa}{\textcolor{corParcial}{\textsc{\small estimativa}}}
+\newcommand{\bancada}{\textcolor{corAprovado}{\textsc{\small bancada}}}
+\newcommand{\folhadedados}{\textsc{\small folha de dados}}
+
+% ---------------------------------------------------------------------
+%  7. MARCAS DA MATRIZ DE DECISÃO (AP2)
+%     Três marcas apenas: os critérios não se convertem em pontos.
+% ---------------------------------------------------------------------
+\newcommand{\serve}{\textcolor{corAprovado}{\textbf{serve}}}
+\newcommand{\ressalva}{\textcolor{corParcial}{\textbf{com ressalva}}}
+\newcommand{\naoserve}{\textcolor{corReprovado}{\textbf{não serve}}}
+
+% ---------------------------------------------------------------------
+%  Pendência do relatório: dado que só a equipe tem (medição, campanha,
+%  papel). Aparece em vermelho no PDF. Nenhum \pendente pode sobrar na
+%  entrega: procure por "\pendente" em docs/ antes de enviar.
+% ---------------------------------------------------------------------
+\newcommand{\pendente}[1]{\textcolor{red}{\textbf{\if\relax\detokenize{#1}\relax[?]\else[pendente: #1]\fi}}}

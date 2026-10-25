@@ -53,12 +53,24 @@ Desenvolvido em C++ sobre o framework Arduino, com PlatformIO no VSCode como amb
 
 ```
 FitoSfera-Topicos/
-├── platformio.ini
-├── intrucoes_montagem.md   (ligação dos fios na protoboard)
 ├── README.md
-└── src/
-    └── main.cpp
+├── firmware/               (abrir esta pasta no PlatformIO)
+│   ├── platformio.ini
+│   ├── intrucoes_montagem.md   (ligação dos fios na protoboard)
+│   └── src/main.cpp
+├── gravador/               (central BLE que grava a campanha; ver gravador/README.md)
+│   ├── gravador.py
+│   ├── protocolo.py
+│   ├── qualidade.py
+│   ├── ensaio.py           (CT-02, CT-13, CT-14 cronometrados)
+│   └── ct05.py             (CT-05: serial + BLE)
+├── dados/                  (CSV da campanha, limpar.py e grafico.py)
+├── ensaios/                (evidências dos ensaios da AP2; RESULTADOS.md resume)
+└── docs/                   (fontes LaTeX do relatório)
 ```
+
+O firmware não tem credenciais: o BLE não usa senha de rede nem *broker*, então não há
+`secrets.h` nem `secrets.example.h`.
 
 ### Configuração
 
@@ -216,6 +228,15 @@ Todos os testes de BLE foram feitos com o **nRF Connect em um celular Android**,
 - Reinício do ESP32: o id do reinício muda, a sequência volta a 1 e o acumulado recomeça de 0.
 - Nova tentativa em 5 s quando um sensor falha, e leituras do BH1750 no modo de uma medida.
 - Funcionamento ligado em um carregador USB comum de 5 V (um carregador rápido que religava a saída com a carga baixa foi descartado).
+
+**Verificado com o gravador no notebook (AP2, 24 e 25/10/2026)**
+
+Resumo em `ensaios/RESULTADOS.md`; números no Capítulo 7 e no Apêndice C do relatório.
+- Campanha de 24,1 h num quarto: 288 leituras, completude de 97,6 % das janelas de 5 min, 0 fora do contrato, 0 repetidas, 0 campos ausentes, 1 lacuna (a provocada no CT-16).
+- `01` respondido em 0,17 s (mediana de 10); `02` só zera o contador com a sequência do pacote em espera (CT-13, CT-14).
+- Sol direto: 70 a 72 mil lux sem saturar (CT-02); série CSV da serial com 7 campos (CT-05).
+- Queda do Bluetooth do PC: reconexão sozinha 7,2 s depois (CT-15). Gravador parado 35 min: lacuna no CSV, perda contada pela sequência e luz do intervalo inteira no pacote seguinte (CT-16, CT-20).
+- Nó sem energia: `desconectado` em 3,6 e 5,9 s (CT-18). Reinício: id novo, sem repetidas nem perdas falsas (CT-17), mas a seq 1, medida 2 s depois de ligar, se perde quando o gravador demora a reconectar.
 
 ---
 
