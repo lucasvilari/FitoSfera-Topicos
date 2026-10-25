@@ -139,7 +139,7 @@ python gravador/gravador.py --saida ensaios/ct17.csv --eventos ensaios/ct17-even
 \begin{quadroCT}{14}{confirmação}
 \linhaCT{Requisito verificado}{\RF{09}}
 \linhaCT{Objetivo}{Verificar que só a confirmação do pacote em espera zera o contador de segundos sem sucesso.}
-\linhaCT{Material}{nRF Connect.}
+\linhaCT{Material}{nRF Connect ou \texttt{gravador/ensaio.py}.}
 \linhaCT{Procedimento}{1. Receber um pacote de sequência NN e não confirmar; pedir outro com \texttt{01} e anotar o contador.\newline
   2. Confirmar com \texttt{02} \texttt{NN} o pacote recebido; pedir outro e anotar o contador.}
 \linhaCT{Resultado esperado}{Sem confirmação, o contador cresce; com ela, volta perto de zero no pacote seguinte.}

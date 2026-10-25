@@ -8,9 +8,11 @@
 Cada requisito do Capítulo~\ref{cap:requisitos} tem um caso de teste. Os
 procedimentos passo a passo estão no Apêndice~\ref{ap:testes}. Os casos
 herdados da AP1 mantêm o número; os de LEDs (\CT{03}, \CT{04}, \CT{08} e
-\CT{09}) saíram junto com os LEDs. Há três fontes de evidência: os
+\CT{09}) saíram junto com os LEDs. Há quatro fontes de evidência: os
 ensaios com o nRF Connect num celular Android, feitos antes da campanha e
-registrados no README; os testes automáticos do gravador
+registrados no README; os ensaios cronometrados com o gravador
+(\texttt{gravador/ensaio.py} e \texttt{gravador/ct05.py}), cujos arquivos
+estão em \caminho{ensaios/}; os testes automáticos do gravador
 (\texttt{python3} \texttt{-m} \texttt{unittest} \texttt{discover} \texttt{gravador}, 10 testes, todos
 passando); e o \texttt{mensagens.csv} e o \texttt{eventos.csv} da
 campanha, lidos pelo \texttt{qualidade.py}.

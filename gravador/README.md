@@ -26,6 +26,9 @@ python3 -m venv .venv
 ```
 
 Feche o nRF Connect no celular antes: o nó aceita **um central por vez**.
+Para parar, Ctrl+C; rodando em segundo plano, `kill -INT` ou `kill -TERM` fazem o mesmo e anotam
+`fim_gravador`. Não use `kill -9`: o BlueZ pode manter a conexão aberta, e o nó, ainda conectado,
+para de anunciar (resolve com `bluetoothctl disconnect <endereço>`).
 Se o gravador for interrompido e voltar a rodar, ele acrescenta ao mesmo arquivo.
 
 ## Durante a campanha
@@ -48,6 +51,8 @@ No fim, gere o arquivo limpo e a figura do relatório:
 | `protocolo.py` | UUIDs, tamanho e decodificação do pacote de 19 bytes (espelha `firmware/src/main.cpp`) |
 | `gravador.py` | o central BLE que grava o CSV |
 | `qualidade.py` | completude, perdas, duplicatas, reinícios, lacunas e luz por dia |
+| `ensaio.py` | CT-14, CT-13 e CT-02 cronometrados (comandos `01` e `02`); grava em `ensaios/` |
+| `ct05.py` | CT-05: lê a serial (DTR/RTS soltos) enquanto pede leituras pelo BLE |
 | `test_*.py` | `python3 -m unittest discover gravador` |
 
 ## Colunas de `mensagens.csv` (bruto)

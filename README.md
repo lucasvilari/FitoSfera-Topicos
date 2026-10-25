@@ -8,7 +8,7 @@ Protótipo de nó sensor IoT para monitoramento de condições ambientais de cul
 
 Construir um dispositivo capaz de medir temperatura, umidade relativa do ar e luminosidade de um ambiente, e transmiti-las por Bluetooth Low Energy (BLE) a um aplicativo no celular.
 
-> **Estado atual:** o aplicativo FitoSfera ainda está em desenvolvimento e não consome este dispositivo. O circuito e o firmware foram testados com um **celular Android usando o app nRF Connect**, que lê as características BLE e escreve os comandos à mão. Veja "Estado da validação" abaixo.
+> **Estado atual:** o aplicativo FitoSfera ainda está em desenvolvimento e não consome este dispositivo. O circuito e o firmware foram testados com um **celular Android usando o app nRF Connect**, que lê as características BLE e escreve os comandos à mão. Na AP2, também com o gravador BLE da equipe (`gravador/`) num notebook, numa campanha de 24 h. Veja "Estado da validação" abaixo.
 
 ---
 
